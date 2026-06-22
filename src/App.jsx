@@ -1,21 +1,23 @@
 import { useEffect, useRef, useState } from "react";
 
+const asset = (path) => `${import.meta.env.BASE_URL}${path.replace(/^\//, "")}`;
+
 const frames = [
-  "/frames/frame_00.jpg",
-  "/frames/frame_02.jpg",
-  "/frames/frame_04.jpg",
-  "/frames/frame_06.jpg",
-  "/frames/frame_08.jpg",
-  "/frames/frame_10.jpg",
+  asset("/frames/frame_00.jpg"),
+  asset("/frames/frame_02.jpg"),
+  asset("/frames/frame_04.jpg"),
+  asset("/frames/frame_06.jpg"),
+  asset("/frames/frame_08.jpg"),
+  asset("/frames/frame_10.jpg"),
 ];
 
-const templateVideo = "/templates/car-ootd-template.mp4";
+const templateVideo = asset("/templates/car-ootd-template.mp4");
 
 const faceMaterialTypes = [
   {
     title: "正脸照",
     desc: "五官清晰，适合作为主身份参考",
-    frame: "/reference/model-front-reference.png?v=photo-20260617",
+    frame: asset("/reference/model-front-reference.png?v=photo-20260617"),
     required: true,
     minimum: "最低 1024 x 1024px，建议 1536px 以上",
     tips: ["五官完整清晰，眼睛、鼻子、嘴完整可见", "无遮挡、无墨镜和帽子，头部不要过小", "光线均匀，避免强阴影、强滤镜和明显压缩失真"],
@@ -26,26 +28,26 @@ const garmentMaterialTypes = [
   {
     title: "正面平铺图",
     desc: "颜色、版型和 Logo 主参考",
-    frame: "/reference/garment-front-flat-reference.png?v=image2-20260617-1342",
+    frame: asset("/reference/garment-front-flat-reference.png?v=image2-20260617-1342"),
     required: true,
     tips: ["衣服正面完整展示", "领口、袖口、下摆不要被裁切", "Logo、纹理和颜色尽量清晰"],
   },
   {
     title: "背面平铺图",
     desc: "用于补充背部结构和领口信息",
-    frame: "/reference/garment-back-flat-reference.png?v=image2-20260617-1342",
+    frame: asset("/reference/garment-back-flat-reference.png?v=image2-20260617-1342"),
     tips: ["衣服背面完整展示", "背部结构、后领和下摆清楚", "背景保持干净"],
   },
   {
     title: "细节特写图",
     desc: "补充纹理、纽扣、印花等细节",
-    frame: "/reference/garment-detail-reference.png?v=image2-20260617-1342",
+    frame: asset("/reference/garment-detail-reference.png?v=image2-20260617-1342"),
     tips: ["拍清面料肌理", "纽扣、刺绣、印花等重点细节清楚", "避免反光和过曝"],
   },
   {
     title: "上身效果图",
     desc: "帮助还原真实穿着比例",
-    frame: "/reference/garment-look-reference.png?v=image2-20260617-1342",
+    frame: asset("/reference/garment-look-reference.png?v=image2-20260617-1342"),
     tips: ["展示真实穿着比例", "衣服主体完整，不被手臂或道具遮挡", "姿态自然，便于还原上身效果"],
   },
 ];
@@ -296,7 +298,7 @@ const defaultTaskMaterials = {
     {
       title: "正脸照",
       desc: "身份与五官主参考",
-      image: "/reference/model-front-reference.png?v=photo-20260617",
+      image: asset("/reference/model-front-reference.png?v=photo-20260617"),
       alt: "模特正脸照",
       required: true,
     },
@@ -305,26 +307,26 @@ const defaultTaskMaterials = {
     {
       title: "正面平铺图",
       desc: "颜色、版型和 Logo 主参考",
-      image: "/reference/garment-front-flat-reference.png?v=image2-20260617-1342",
+      image: asset("/reference/garment-front-flat-reference.png?v=image2-20260617-1342"),
       alt: "服装正面平铺图",
       required: true,
     },
     {
       title: "背面平铺图",
       desc: "背部结构与后领信息",
-      image: "/reference/garment-back-flat-reference.png?v=image2-20260617-1342",
+      image: asset("/reference/garment-back-flat-reference.png?v=image2-20260617-1342"),
       alt: "服装背面平铺图",
     },
     {
       title: "细节特写图",
       desc: "纹理、纽扣和印花细节",
-      image: "/reference/garment-detail-reference.png?v=image2-20260617-1342",
+      image: asset("/reference/garment-detail-reference.png?v=image2-20260617-1342"),
       alt: "服装细节特写图",
     },
     {
       title: "上身效果图",
       desc: "真实穿着比例参考",
-      image: "/reference/garment-look-reference.png?v=image2-20260617-1342",
+      image: asset("/reference/garment-look-reference.png?v=image2-20260617-1342"),
       alt: "服装上身效果图",
     },
   ],
@@ -1467,7 +1469,7 @@ function TemplateScreen({ selectedTemplate, selectTemplate, previewTemplateVideo
               loop
               playsInline
               autoPlay
-              poster="/frames/frame_04.jpg"
+              poster={frames[3]}
               onClick={previewTemplateVideo}
               aria-label="单击放大播放男装车内 OOTD 模板视频"
             />
