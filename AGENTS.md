@@ -45,7 +45,7 @@ Upload-material area decisions:
 - Upload entry points appear as a `+` card after the last material card; avoid separate "上传多张" buttons.
 - Material thumbnails should show the full image without cropping, and each material card keeps the "参考规范" entry at the lower-right of the card body.
 - Uploaded material cards use delete buttons and no selected state; after deletion, the same card position becomes a re-upload entry.
-- Required upload slots are model front face and garment front flat-lay only. Garment back flat-lay is optional supplemental material.
+- Required upload slots are model front face and garment front flat-lay only. Do not show separate garment slots for back flat-lay, detail close-up, or wearing-effect image; any extra garment references can only be added through the "继续上传" supplemental card.
 - The right-side upload guidance separates model-image requirements from garment-image requirements with clearly different visual treatments, so users can scan them independently.
 - Front-face reference requirements include a concrete resolution floor: at least 1024 x 1024px, with 1536px or above preferred.
 - Do not show a separate "参考视频模板" summary strip inside the upload-material area; template context belongs in the template-selection step.
@@ -81,7 +81,8 @@ Video-generation module decisions:
 - Generation manager selection controls use circular dots only: selected = solid dot, unselected = hollow dot. Do not use square checkbox visuals.
 - Model upload only requires one front-face photo. Do not show full-body or side-face model upload slots in the v2 workbench.
 - Project-level generated video records must synchronize into step 3. If a project shows 3 downloadable videos, step 3 must show 3 ready video cards across the preview rows; if it shows 30, step 3 must expose 30 ready video sources.
-- Row video-result enlargement is triggered by the page scroll anchor reaching a preview row that already has video cards, not by mouse hover. Only the generated-video column enlarges so users can scan video quality while scrolling; the preview image and configuration columns keep their size and position. Rows without video cards do not enlarge.
+- New projects start with ungenerated preview rows. The preview image area should show a clear "预览图待生成" empty state until the user clicks "生成预览图"; do not preload finished preview images for a just-created project.
+- Row video-result carousels must keep stable card widths while the page scrolls. Do not use scroll-snap, hover-driven selected-video changes, or focus-state width enlargement that can cause the horizontal rail to jump between the first and last video after users scroll away and back.
 - In the upload step, the right-side material-guidance panel should sit lower so its top aligns with the upload material card area, not the top of the section header.
 - In each preview row, AI copy has an explicit "应用" action beside the generated copy; after applying, show a visible applied state until the copy changes again.
 - Quick prompt suggestions must be based on the actual preview image content. The preview image has higher generation weight than prompt text, so do not offer weather/scene suggestions that conflict with the current image, such as asking for rain when the preview is clearly a bright car interior.

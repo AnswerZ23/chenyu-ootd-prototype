@@ -32,24 +32,6 @@ const garmentMaterialTypes = [
     required: true,
     tips: ["衣服正面完整展示", "领口、袖口、下摆不要被裁切", "Logo、纹理和颜色尽量清晰"],
   },
-  {
-    title: "背面平铺图",
-    desc: "用于补充背部结构和领口信息",
-    frame: asset("/reference/garment-back-flat-reference.png?v=image2-20260617-1342"),
-    tips: ["衣服背面完整展示", "背部结构、后领和下摆清楚", "背景保持干净"],
-  },
-  {
-    title: "细节特写图",
-    desc: "补充纹理、纽扣、印花等细节",
-    frame: asset("/reference/garment-detail-reference.png?v=image2-20260617-1342"),
-    tips: ["拍清面料肌理", "纽扣、刺绣、印花等重点细节清楚", "避免反光和过曝"],
-  },
-  {
-    title: "上身效果图",
-    desc: "帮助还原真实穿着比例",
-    frame: asset("/reference/garment-look-reference.png?v=image2-20260617-1342"),
-    tips: ["展示真实穿着比例", "衣服主体完整，不被手臂或道具遮挡", "姿态自然，便于还原上身效果"],
-  },
 ];
 
 const defaultActionSuggestions = [
@@ -255,33 +237,80 @@ const templatePreviewSamples = [
   },
 ];
 
-const initialPreviewRows = templatePreviewSamples.map((sample) => ({
-  ...sample,
-  version: 1,
-  actionText: sample.action,
-  sceneText: sample.scene,
-  actionPrompt: actionSuggestionMap[sample.action]?.[0]?.prompt ?? actionPolishMap[sample.action],
-  scenePrompt: sceneSuggestionMap[sample.scene]?.[0]?.prompt ?? scenePolishMap[sample.scene],
-  videoStatus: "待生成",
-}));
+function createPreviewRows({ generated = true } = {}) {
+  return templatePreviewSamples.map((sample) => ({
+    ...sample,
+    image: generated ? sample.image : null,
+    previewStatus: generated ? "已生成" : "待生成",
+    previewGeneratedAt: generated ? formatSavedTime() : null,
+    version: 1,
+    actionText: sample.action,
+    sceneText: sample.scene,
+    actionPrompt: actionSuggestionMap[sample.action]?.[0]?.prompt ?? actionPolishMap[sample.action],
+    scenePrompt: sceneSuggestionMap[sample.scene]?.[0]?.prompt ?? scenePolishMap[sample.scene],
+    videoStatus: "待生成",
+  }));
+}
+
+const initialPreviewRows = createPreviewRows();
+
+function createEmptyPreviewRows() {
+  return createPreviewRows({ generated: false });
+}
+
+function isPreviewGenerated(row) {
+  return Boolean(row?.image);
+}
+
+function hydrateGeneratedPreviewRows(rows = createEmptyPreviewRows()) {
+  return templatePreviewSamples.map((sample, index) => {
+    const current = rows[index] ?? {};
+    return {
+      ...sample,
+      ...current,
+      title: current.title ?? sample.title,
+      sample: current.sample ?? sample.sample,
+      shot: current.shot ?? sample.shot,
+      action: current.action ?? sample.action,
+      scene: current.scene ?? sample.scene,
+      image: sample.image,
+      previewStatus: "已生成",
+      previewGeneratedAt: formatSavedTime(),
+      version: (current.version ?? 0) + 1,
+      actionText: current.actionText ?? sample.action,
+      sceneText: current.sceneText ?? sample.scene,
+      actionPrompt: current.actionPrompt ?? actionSuggestionMap[sample.action]?.[0]?.prompt ?? actionPolishMap[sample.action],
+      scenePrompt: current.scenePrompt ?? sceneSuggestionMap[sample.scene]?.[0]?.prompt ?? scenePolishMap[sample.scene],
+      videoStatus: current.videoStatus ?? "待生成",
+    };
+  });
+}
 
 function materialKey(group, title) {
   return `${group}:${title}`;
 }
 
 function getActionSuggestions(row) {
+  if (!isPreviewGenerated(row)) return defaultActionSuggestions;
   return actionSuggestionMap[row.action] ?? defaultActionSuggestions;
 }
 
 function getSceneSuggestions(row) {
+  if (!isPreviewGenerated(row)) return defaultSceneSuggestions;
   return sceneSuggestionMap[row.scene] ?? defaultSceneSuggestions;
 }
 
 function fallbackActionPrompt(row) {
+  if (!isPreviewGenerated(row)) {
+    return "请先生成预览图，再基于实际画面润色动作提示词。";
+  }
   return `基于预览图“${row.shot}”的实际画面继续生成，保留当前人物姿态、车内构图和服装展示重点，只做自然连续的小幅动作。`;
 }
 
 function fallbackScenePrompt(row) {
+  if (!isPreviewGenerated(row)) {
+    return "请先生成预览图，再基于实际画面润色风景提示词。";
+  }
   return `基于预览图“${row.shot}”的实际车内画面继续生成，保留当前光线、窗外环境和构图，不强行改变天气、昼夜或道路类型。`;
 }
 
@@ -311,24 +340,6 @@ const defaultTaskMaterials = {
       alt: "服装正面平铺图",
       required: true,
     },
-    {
-      title: "背面平铺图",
-      desc: "背部结构与后领信息",
-      image: asset("/reference/garment-back-flat-reference.png?v=image2-20260617-1342"),
-      alt: "服装背面平铺图",
-    },
-    {
-      title: "细节特写图",
-      desc: "纹理、纽扣和印花细节",
-      image: asset("/reference/garment-detail-reference.png?v=image2-20260617-1342"),
-      alt: "服装细节特写图",
-    },
-    {
-      title: "上身效果图",
-      desc: "真实穿着比例参考",
-      image: asset("/reference/garment-look-reference.png?v=image2-20260617-1342"),
-      alt: "服装上身效果图",
-    },
   ],
 };
 
@@ -341,7 +352,7 @@ const tasks = [
     inputs: {
       templateVideo: "男装车内 OOTD 模板",
       model: "正脸照",
-      garment: "正面平铺图、细节特写图、上身效果图",
+      garment: "正面平铺图",
       generation: "开源模型 / 每张预览图 1 条视频",
     },
     outputs: [
@@ -521,12 +532,17 @@ function normalizePublicAssetPath(value) {
 function normalizeMaterialImages(materials) {
   if (!materials || typeof materials !== "object") return materials;
   return Object.fromEntries(
-    Object.entries(materials).map(([group, items]) => [
-      group,
-      Array.isArray(items)
-        ? items.map((item) => ({ ...item, image: normalizePublicAssetPath(item.image) }))
-        : items,
-    ])
+    Object.entries(materials).map(([group, items]) => {
+      const allowedTitles = group === "garment" ? new Set(["正面平铺图"]) : null;
+      return [
+        group,
+        Array.isArray(items)
+          ? items
+              .filter((item) => !allowedTitles || allowedTitles.has(item.title))
+              .map((item) => ({ ...item, image: normalizePublicAssetPath(item.image) }))
+          : items,
+      ];
+    })
   );
 }
 
@@ -701,7 +717,7 @@ function normalizeTask(task) {
     inputs: task.inputs ?? {
       templateVideo: "男装车内 OOTD 模板",
       model: "正脸照",
-      garment: "正面平铺图、细节特写图、上身效果图",
+      garment: "正面平铺图",
       generation: "开源模型 / 每张预览图 1 条视频",
     },
     materials: normalizeMaterialImages(task.materials ?? defaultTaskMaterials),
@@ -871,11 +887,18 @@ export function App() {
           version: row.version + 1,
           confirmed: false,
           image: frames[(rowIndex + row.version) % frames.length],
+          previewStatus: "已生成",
+          previewGeneratedAt: formatSavedTime(),
           videoStatus: "待生成",
         };
       })
     );
     setToast("已重抽该预览图");
+  }
+
+  function generatePreviewRows() {
+    setPreviewRows((rows) => hydrateGeneratedPreviewRows(rows));
+    setToast("已生成 6 张预览图");
   }
 
   function downloadResult() {
@@ -978,7 +1001,7 @@ export function App() {
       template: "男装车内OOTD",
       cover: frames[0],
       selectedTemplate: "car-ootd",
-      previewRows: initialPreviewRows,
+      previewRows: createEmptyPreviewRows(),
       model: "open",
       count: 1,
       deletedMaterials: {},
@@ -1090,6 +1113,7 @@ export function App() {
               <div id="step-upload" className="flow-section">
                 <UploadScreen
                   goToStep={goToStep}
+                  generatePreviewRows={generatePreviewRows}
                   deletedMaterials={deletedMaterials}
                   setDeletedMaterials={setDeletedMaterials}
                 />
@@ -1538,7 +1562,7 @@ function TemplateScreen({ selectedTemplate, selectTemplate, previewTemplateVideo
   );
 }
 
-function UploadScreen({ goToStep, deletedMaterials, setDeletedMaterials }) {
+function UploadScreen({ goToStep, generatePreviewRows, deletedMaterials, setDeletedMaterials }) {
   const [activeSpec, setActiveSpec] = useState(null);
 
   function isDeleted(group, title) {
@@ -1567,7 +1591,7 @@ function UploadScreen({ goToStep, deletedMaterials, setDeletedMaterials }) {
                   <span>是否自动带入上次素材</span>
                 </label>
               </div>
-              <p>模特图片只需要上传 1 张正脸照。服装图片必传项只有正面平铺图；背面平铺图、细节图和上身效果图作为可选补充。首次上传后会被后台记住，刷新或关闭页面后自动带入。</p>
+              <p>模特图片只需要上传 1 张正脸照。服装图片必传项只有正面平铺图；如需补充更多服装参考，可使用继续上传。首次上传后会被后台记住，刷新或关闭页面后自动带入。</p>
             </div>
           </div>
 
@@ -1599,7 +1623,7 @@ function UploadScreen({ goToStep, deletedMaterials, setDeletedMaterials }) {
             <div className="material-head">
               <div>
                 <strong>服装图片</strong>
-                <span>必传项只有正面平铺图，建议补充背面、细节和上身效果图</span>
+                <span>只保留正面平铺图，其他参考通过继续上传补充</span>
               </div>
             </div>
             <div className="material-grid garment">
@@ -1620,7 +1644,13 @@ function UploadScreen({ goToStep, deletedMaterials, setDeletedMaterials }) {
             </div>
           </div>
 
-          <button className="primary cost-button" onClick={() => goToStep("step-generate", 3)}>
+          <button
+            className="primary cost-button"
+            onClick={() => {
+              generatePreviewRows();
+              goToStep("step-generate", 3);
+            }}
+          >
             生成预览图 <PowerCost value={12} />
           </button>
         </div>
@@ -1952,12 +1982,25 @@ function PreviewGenerationRow({
           </div>
           <em>V{row.version}</em>
         </div>
-        <button className="row-preview-button" type="button" onClick={() => setPreviewZoomOpen(true)}>
-          <img src={row.image} alt={`${row.title}放大预览`} />
+        <button
+          className={isPreviewGenerated(row) ? "row-preview-button" : "row-preview-button row-preview-button-empty"}
+          type="button"
+          onClick={() => {
+            if (isPreviewGenerated(row)) setPreviewZoomOpen(true);
+          }}
+        >
+          {isPreviewGenerated(row) ? (
+            <img src={row.image} alt={`${row.title}放大预览`} />
+          ) : (
+            <span className="preview-pending-state">
+              <strong>预览图待生成</strong>
+              <small>上传素材后点击“生成预览图”</small>
+            </span>
+          )}
         </button>
         <div className="row-preview-actions">
           <button className="ghost cost-button" onClick={() => rerollPreview(row.id)}>
-            重抽此图 <PowerCost value={2} />
+            {isPreviewGenerated(row) ? "重抽此图" : "生成此图"} <PowerCost value={2} />
           </button>
         </div>
       </div>
@@ -2026,9 +2069,11 @@ function PreviewGenerationRow({
                     item.status === "generating" ? "is-generating" : "",
                     selectedVideoIndex === videoIndex && item.status === "ready" ? "selected" : "",
                   ].filter(Boolean).join(" ")}
-                  onMouseEnter={() => setSelectedVideoIndex(videoIndex)}
                   onClick={() => {
-                    if (item.status === "ready") openVideoPreview(videoIndex);
+                    if (item.status === "ready") {
+                      setSelectedVideoIndex(videoIndex);
+                      openVideoPreview(videoIndex);
+                    }
                   }}
                   onKeyDown={(event) => {
                     if (item.status === "ready") handleVideoKeyDown(event, videoIndex);
@@ -2390,8 +2435,8 @@ function InfoPanel() {
           <span>服装图片规范</span>
           <ul>
             <li>必传项只有正面平铺图，用于识别颜色、版型、Logo 和纹理。</li>
-            <li>背面平铺图不是必传项，可作为背部结构和后领信息补充。</li>
-            <li>细节特写和上身效果图为可选补充，用于提升纹理和穿着比例还原。</li>
+            <li>当前版本不再要求背面平铺图、细节特写图和上身效果图。</li>
+            <li>如商家确有补充素材，可通过“继续上传”追加，不作为标准上传位。</li>
           </ul>
         </section>
       </div>

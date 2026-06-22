@@ -1825,11 +1825,37 @@ textarea:focus {
   display: block;
 }
 
+.row-preview-button-empty {
+  border: 1px dashed var(--line-dark);
+  background: #f4f8f5;
+  cursor: default;
+  display: grid;
+  place-items: center;
+  padding: 22px;
+}
+
 .row-preview-button img {
   width: 100%;
   height: 100%;
   object-fit: contain;
   display: block;
+}
+
+.preview-pending-state {
+  display: grid;
+  gap: 8px;
+  text-align: center;
+  color: var(--muted);
+}
+
+.preview-pending-state strong {
+  color: var(--ink);
+  font-size: 17px;
+}
+
+.preview-pending-state small {
+  font-size: 13px;
+  line-height: 1.5;
 }
 
 .row-preview-actions {
@@ -2016,7 +2042,8 @@ textarea:focus {
   gap: 12px;
   overflow-x: auto;
   padding: 10px;
-  scroll-snap-type: x mandatory;
+  scroll-snap-type: none;
+  overflow-anchor: none;
   scrollbar-width: thin;
 }
 
@@ -2030,14 +2057,14 @@ textarea:focus {
   overflow: hidden;
   position: relative;
   padding: 0;
-  scroll-snap-align: start;
+  scroll-snap-align: none;
   cursor: pointer;
   outline: none;
 }
 
 .preview-generation-row.is-focus-preview .video-result-card,
 .preview-generation-row.is-focus-preview .video-generate-card {
-  flex-basis: clamp(300px, 44%, 420px);
+  flex-basis: clamp(172px, 32%, 260px);
 }
 
 .video-result-card.selected {
@@ -2217,7 +2244,7 @@ textarea:focus {
   justify-content: center;
   gap: 8px;
   padding: 18px;
-  scroll-snap-align: start;
+  scroll-snap-align: none;
 }
 
 .video-generate-card strong {
