@@ -6,6 +6,12 @@ Before making substantial visual changes, use the Product Design plugin's `get-c
 
 When implementing from a selected generated mock, treat that image as the source of truth for layout, component anatomy, density, spacing, color, typography, visible content, and hierarchy.
 
+GitHub Pages deployment rule:
+- This prototype is deployed at `https://answerz23.github.io/chenyu-ootd-prototype/`, so public assets live under a repository subpath in production.
+- Do not hard-code public image or video paths as root-relative strings like `/frames/...`, `/reference/...`, or `/templates/...`.
+- Use the `asset(...)` helper in `src/App.jsx` for public media paths so Vite can apply `import.meta.env.BASE_URL` locally and on GitHub Pages.
+- When reading old localStorage project data, keep normalizing stored media paths so older `/frames/...` records do not continue to render as broken assets online.
+
 OOTD 2.0 project-mode decisions:
 - This v2 prototype is independent from `ootd-merchant-prototype`; do not back-port changes unless explicitly requested.
 - The first screen is the project home, not the three-step workbench.
