@@ -44,6 +44,7 @@ Upload-material area decisions:
 - "是否自动带入上次素材" is a compact checked control beside the "上传素材" heading, not a large banner.
 - Upload entry points appear as a `+` card after the last material card; avoid separate "上传多张" buttons.
 - Material thumbnails should show the full image without cropping, and each material card keeps the "参考规范" entry at the lower-right of the card body.
+- Model front-face and garment front-flat-lay upload cards must use the same card width, image ratio, and visual scale. Do not let the garment card stretch wider just because the garment group now has fewer fixed slots.
 - Uploaded material cards use delete buttons and no selected state; after deletion, the same card position becomes a re-upload entry.
 - Required upload slots are model front face and garment front flat-lay only. Do not show separate garment slots for back flat-lay, detail close-up, or wearing-effect image; any extra garment references can only be added through the "继续上传" supplemental card.
 - The right-side upload guidance separates model-image requirements from garment-image requirements with clearly different visual treatments, so users can scan them independently.

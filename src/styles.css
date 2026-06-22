@@ -1436,7 +1436,9 @@ textarea:focus {
 
 .material-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(260px, 360px));
+  justify-content: start;
+  align-items: stretch;
   gap: 12px;
 }
 
@@ -1445,7 +1447,7 @@ textarea:focus {
 }
 
 .material-grid.garment {
-  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(260px, 360px));
 }
 
 .material-card {
@@ -4426,7 +4428,7 @@ textarea:focus {
 
   .material-grid,
   .material-grid.garment {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(240px, 360px));
   }
 
   .upload-info-panel {
