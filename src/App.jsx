@@ -512,16 +512,49 @@ function updateProjectGenerationProgress(project, now = Date.now()) {
   };
 }
 
-function normalizeOutputList(project, outputs = []) {
-  return outputs.map((output, index) => ({
-    ...buildOutputVideo(project, index, { status: output.status ?? "可下载" }),
-    ...output,
-    status: isGeneratingOutput(output) ? output.status : "可下载",
-    progress: isGeneratingOutput(output) ? output.progress ?? 42 : 100,
-    generationStartedAt: isGeneratingOutput(output)
-      ? output.generationStartedAt ?? Date.now() - ((output.progress ?? 42) / 100) * VIDEO_GENERATION_DURATION_MS
-      : undefined,
+function normalizePublicAssetPath(value) {
+  if (typeof value !== "string") return value;
+  if (/^\/(frames|reference|templates)\//.test(value)) return asset(value);
+  return value;
+}
+
+function normalizeMaterialImages(materials) {
+  if (!materials || typeof materials !== "object") return materials;
+  return Object.fromEntries(
+    Object.entries(materials).map(([group, items]) => [
+      group,
+      Array.isArray(items)
+        ? items.map((item) => ({ ...item, image: normalizePublicAssetPath(item.image) }))
+        : items,
+    ])
+  );
+}
+
+function normalizePreviewRows(rows) {
+  if (!Array.isArray(rows)) return rows;
+  return rows.map((row) => ({
+    ...row,
+    image: normalizePublicAssetPath(row.image),
   }));
+}
+
+function normalizeOutputList(project, outputs = []) {
+  return outputs.map((output, index) => {
+    const fallbackOutput = buildOutputVideo(project, index, { status: output.status ?? "可下载" });
+    const mergedOutput = {
+      ...fallbackOutput,
+      ...output,
+    };
+    return {
+      ...mergedOutput,
+      poster: normalizePublicAssetPath(mergedOutput.poster),
+      status: isGeneratingOutput(output) ? output.status : "可下载",
+      progress: isGeneratingOutput(output) ? output.progress ?? 42 : 100,
+      generationStartedAt: isGeneratingOutput(output)
+        ? output.generationStartedAt ?? Date.now() - ((output.progress ?? 42) / 100) * VIDEO_GENERATION_DURATION_MS
+        : undefined,
+    };
+  });
 }
 
 function normalizeProject(project, index = 0) {
@@ -543,7 +576,9 @@ function normalizeProject(project, index = 0) {
 
   const normalized = {
     ...project,
-    cover: project.cover ?? outputs[0]?.poster ?? frames[index % frames.length],
+    cover: normalizePublicAssetPath(project.cover) ?? outputs[0]?.poster ?? frames[index % frames.length],
+    previewRows: normalizePreviewRows(project.previewRows),
+    materials: normalizeMaterialImages(project.materials),
     outputs,
     generatingOutputs,
     outputCount: outputs.length,
@@ -662,14 +697,15 @@ function normalizeTask(task) {
   const outputs = task.outputs ?? createTaskOutputs(task);
   return {
     ...task,
+    hero: normalizePublicAssetPath(task.hero),
     inputs: task.inputs ?? {
       templateVideo: "男装车内 OOTD 模板",
       model: "正脸照",
       garment: "正面平铺图、细节特写图、上身效果图",
       generation: "开源模型 / 每张预览图 1 条视频",
     },
-    materials: task.materials ?? defaultTaskMaterials,
-    outputs,
+    materials: normalizeMaterialImages(task.materials ?? defaultTaskMaterials),
+    outputs: normalizeOutputList(task, outputs),
   };
 }
 
