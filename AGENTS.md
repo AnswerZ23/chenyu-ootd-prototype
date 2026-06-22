@@ -19,6 +19,8 @@ OOTD 2.0 project-mode decisions:
 - "新建项目" immediately creates a named project and enters the project workbench. Project naming follows `YYMMDD-HHMM-NNN 模板名称`, such as `260618-1342-001 男装车内OOTD`.
 - A project contains template selection, uploaded materials, preview rows, action/scene configuration, generated videos, and download actions.
 - Keep at most 10 projects. When the user tries to create the 11th project, show a blocking prompt and require manual deletion first; do not auto-delete old projects.
+- Project names are editable. Default names still follow the generated `YYMMDD-HHMM-NNN 模板名称` format, but users can rename a project from the project library or inside the workbench.
+- Project-mode storage should support returning later to continue editing. Do not assume uploaded resources expire after 18 hours in the product experience; expose account capacity, currently 2GB, as used capacity / total capacity on the project home.
 - Historical projects support entering and deleting. Deleting a project requires confirmation and removes that project's saved materials, configuration, previews, and video records.
 - Returning home, refreshing, or exiting should preserve the current project state in the prototype's local persistence.
 - The left sidebar with the three steps is only shown inside a project workbench. It should show the current project name and a return-home action.
@@ -47,6 +49,7 @@ Upload-material area decisions:
 - Model front-face and garment front-flat-lay upload cards must use the same card width, image ratio, and visual scale. Do not let the garment card stretch wider just because the garment group now has fewer fixed slots.
 - Uploaded material cards use delete buttons and no selected state; after deletion, the same card position becomes a re-upload entry.
 - Required upload slots are model front face and garment front flat-lay only. Do not show separate garment slots for back flat-lay, detail close-up, or wearing-effect image; any extra garment references can only be added through the "继续上传" supplemental card.
+- Garment images have a hard product limit of 5 total images: 1 required front flat-lay plus up to 4 supplemental reference images through "继续上传".
 - The right-side upload guidance separates model-image requirements from garment-image requirements with clearly different visual treatments, so users can scan them independently.
 - Front-face reference requirements include a concrete resolution floor: at least 1024 x 1024px, with 1536px or above preferred.
 - Do not show a separate "参考视频模板" summary strip inside the upload-material area; template context belongs in the template-selection step.
@@ -58,9 +61,14 @@ Preview and result decisions:
 
 Video-generation module decisions:
 - The front-stage workflow is now three steps: 选择模板, 上传素材, 视频生成与配置. Do not split preview confirmation, parameter configuration, and result download into separate workbench sections.
-- For the 男装车内 OOTD template, the backend presets 6 reference samples. One preview generation action produces 6 preview images, displayed as 6 rows inside "视频生成与配置".
+- Preview count is template configuration, not a global hard-code. The 男装车内 OOTD template currently uses 6 reference samples, while future templates may use 4, 6, or 8.
+- For the 男装车内 OOTD template, one preview generation action produces 6 preview images, displayed as 6 rows inside "视频生成与配置".
 - Each preview row owns its own action/scene configuration and video result area. Users can reroll one preview row without affecting the other five.
 - Model selection and video quantity are global options for the whole "视频生成与配置" module, not repeated inside every row.
+- "开源模型" and "闭源模型" are passed as front-end parameters; the actual model invocation happens inside the workflow.
+- Single-preview video generation can request at most 5 videos at once. A whole project can retain at most 30 generated or generating video records.
+- Re-running generation appends new video records until the project limit is reached; it does not overwrite existing generated videos unless the user explicitly deletes or regenerates a specific video.
+- Prompt data must be stored in two layers: the current editable prompt state on each preview row and a prompt snapshot on every video record at generation time.
 - "AI一键配置" belongs at the module level and can fill all six row configurations using a mix of built-in prompt plans and AI-generated refinements.
 - The left sidebar's template step subtitle mirrors the selected template name, such as "男装车内 OOTD".
 - Do not show a separate template-summary card inside "视频生成与配置"; selected-template context belongs in the sidebar and template-selection step.
@@ -74,6 +82,7 @@ Video-generation module decisions:
 - Row-level download means downloading the currently selected generated video card. Batch download downloads all generated videos and does not use row checkboxes.
 - Compute-related UI must not display text like "12算力" or "10算力/条". Use the compute icon plus a number instead.
 - Generation-related buttons must display estimated compute cost with the compute icon: image generation costs 2 per image, image reroll costs 2 per image, video generation costs 10 per video, and row-level video generation shows icon + 10 /条.
+- Estimated compute and actual billing are separate states. Before a workflow call, show "预计消耗" with the compute icon; after generation completes, show "实际扣费" on generated video records.
 - Newly generated videos use a uniform 30-second countdown/progress simulation before becoming downloadable. After 30 seconds, the same record must move from generating/queued state into downloadable outputs across the project home, sidebar generation management, and step 3.
 - The empty row-level "生成视频" placeholder card must not show an extra plus/circle icon. It should only show "生成视频" plus the compute icon and "10/条" in a clean centered layout.
 - AI润色 costs 1 per action. AI一键配置 costs the total number of prompt polish actions it will perform, currently six preview rows × action/scene = icon + 12.

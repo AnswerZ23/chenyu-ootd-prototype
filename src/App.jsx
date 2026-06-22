@@ -318,6 +318,11 @@ const MAX_TASK_HISTORY = 10;
 const PROJECT_LIMIT = 10;
 const VIDEO_GENERATION_DURATION_MS = 30000;
 const VIDEO_GENERATION_TICK_MS = 1000;
+const PROJECT_STORAGE_LIMIT_GB = 2;
+const PROJECT_STORAGE_USED_GB = 0.74;
+const MAX_PROJECT_VIDEO_COUNT = 30;
+const MAX_ROW_VIDEO_COUNT = 5;
+const CURRENT_TEMPLATE_PREVIEW_COUNT = initialPreviewRows.length;
 const PROJECT_STORAGE_KEY = "chenyu-ootd-v2-projects";
 const PROJECT_VIEW_STORAGE_KEY = "chenyu-ootd-v2-view";
 const PROJECT_ACTIVE_STORAGE_KEY = "chenyu-ootd-v2-active-project";
@@ -417,6 +422,9 @@ function buildOutputVideo(source, index, options = {}) {
     status,
     progress: isGenerating ? options.progress ?? 36 : 100,
     previewRowId: options.previewRowId,
+    promptSnapshot: options.promptSnapshot,
+    estimatedCost: options.estimatedCost ?? 10,
+    actualCost: options.actualCost ?? (isGenerating ? undefined : 10),
     generationStartedAt: isGenerating ? options.generationStartedAt ?? Date.now() : undefined,
     generatedAt: options.generatedAt ?? formatSavedTime(new Date(Date.now() - index * 7 * 60 * 1000)),
   };
@@ -483,6 +491,7 @@ function updateProjectGenerationProgress(project, now = Date.now()) {
         ...output,
         status: "可下载",
         progress: 100,
+        actualCost: output.actualCost ?? 10,
         generationStartedAt: undefined,
         generatedAt: formatSavedTime(new Date(now)),
       });
@@ -511,7 +520,7 @@ function updateProjectGenerationProgress(project, now = Date.now()) {
 
   const nextProject = {
     ...project,
-    outputs: [...(project.outputs ?? []), ...readyOutputs].slice(0, 30),
+    outputs: [...(project.outputs ?? []), ...readyOutputs].slice(0, MAX_PROJECT_VIDEO_COUNT),
     generatingOutputs: pendingOutputs,
     updatedAt: formatSavedTime(new Date(now)),
   };
@@ -574,7 +583,7 @@ function normalizeOutputList(project, outputs = []) {
 }
 
 function normalizeProject(project, index = 0) {
-  const outputCount = Math.min(project.outputCount ?? project.outputs?.length ?? 0, 30);
+  const outputCount = Math.min(project.outputCount ?? project.outputs?.length ?? 0, MAX_PROJECT_VIDEO_COUNT);
   const outputs = Array.isArray(project.outputs) && project.outputs.length > 0
     ? normalizeOutputList(project, project.outputs)
     : Array.from({ length: outputCount }, (_, outputIndex) => buildOutputVideo(project, outputIndex));
@@ -598,6 +607,7 @@ function normalizeProject(project, index = 0) {
     outputs,
     generatingOutputs,
     outputCount: outputs.length,
+    count: Math.min(Math.max(project.count ?? 1, 1), MAX_ROW_VIDEO_COUNT),
   };
   return {
     ...normalized,
@@ -627,6 +637,8 @@ function getProjectVideosForPreviewRow(project, rowId, rowIndex, rowCount) {
       poster: output.poster,
       sourceName: output.name,
       shot: output.shot,
+      estimatedCost: output.estimatedCost,
+      actualCost: output.actualCost,
     }));
 }
 
@@ -916,13 +928,24 @@ export function App() {
 
   function addProjectGeneratingOutputs(quantity = 1, rowId = null) {
     if (!activeProjectId) return;
+    const targetProject = projects.find((project) => project.id === activeProjectId);
+    const existingCount = (targetProject?.outputs?.length ?? 0) + (targetProject?.generatingOutputs?.length ?? 0);
+    const remainingCount = MAX_PROJECT_VIDEO_COUNT - existingCount;
+    if (remainingCount <= 0) {
+      setToast(`当前项目最多保留 ${MAX_PROJECT_VIDEO_COUNT} 条视频`);
+      return;
+    }
+    const nextQuantity = Math.min(quantity, remainingCount);
+    if (nextQuantity < quantity) {
+      setToast(`项目剩余 ${remainingCount} 个视频位置，本次只加入 ${nextQuantity} 条`);
+    }
     setProjects((items) =>
       items.map((project) => {
         if (project.id !== activeProjectId) return project;
         const startIndex = (project.outputs?.length ?? 0) + (project.generatingOutputs?.length ?? 0);
         const generatingOutputs = [
           ...(project.generatingOutputs ?? []),
-          ...createGeneratingOutputs(project, startIndex, quantity, { fresh: true, previewRowId: rowId }),
+          ...createGeneratingOutputs(project, startIndex, nextQuantity, { fresh: true, previewRowId: rowId }),
         ];
         const nextProject = {
           ...project,
@@ -949,11 +972,12 @@ export function App() {
           ...completed,
           status: "可下载",
           progress: 100,
+          actualCost: completed.actualCost ?? 10,
           generatedAt: formatSavedTime(),
         };
         const nextProject = {
           ...project,
-          outputs: [...(project.outputs ?? []), readyOutput].slice(0, 30),
+          outputs: [...(project.outputs ?? []), readyOutput].slice(0, MAX_PROJECT_VIDEO_COUNT),
           generatingOutputs,
           updatedAt: formatSavedTime(),
         };
@@ -1013,6 +1037,28 @@ export function App() {
     setProjects((items) => [project, ...items]);
     loadProject(project);
     setToast("已新建项目，内容会实时保存");
+  }
+
+  function renameProject(project) {
+    const nextName = window.prompt("修改项目名称", project?.name ?? "");
+    if (nextName === null) return;
+    const trimmedName = nextName.trim();
+    if (!trimmedName) {
+      setToast("项目名称不能为空");
+      return;
+    }
+    setProjects((items) =>
+      items.map((item) =>
+        item.id === project.id
+          ? {
+              ...item,
+              name: trimmedName,
+              updatedAt: formatSavedTime(),
+            }
+          : item
+      )
+    );
+    setToast("项目名称已更新");
   }
 
   function returnHome() {
@@ -1090,6 +1136,7 @@ export function App() {
             completionStatus={completionStatus}
             activeProject={activeProject}
             returnHome={returnHome}
+            renameProject={renameProject}
             openGenerationManager={() => setGenerationManagerOpen(true)}
           />
         )}
@@ -1099,6 +1146,7 @@ export function App() {
               projects={projects}
               createProject={createProject}
               openProject={loadProject}
+              renameProject={renameProject}
               askDeleteProject={askDeleteProject}
             />
           ) : (
@@ -1208,7 +1256,7 @@ function PowerCost({ value, suffix = "" }) {
   );
 }
 
-function Sidebar({ step, goToStep, selectedTemplateName, completionStatus, activeProject, returnHome, openGenerationManager }) {
+function Sidebar({ step, goToStep, selectedTemplateName, completionStatus, activeProject, returnHome, renameProject, openGenerationManager }) {
   const items = [
     { id: 1, title: "选择模板", desc: selectedTemplateName, target: "step-template" },
     { id: 2, title: "上传素材", desc: "模特图 + 服装图", target: "step-upload" },
@@ -1222,6 +1270,11 @@ function Sidebar({ step, goToStep, selectedTemplateName, completionStatus, activ
       <div className="project-sidebar-head">
         <span>当前项目</span>
         <strong title={activeProject?.name}>{activeProject?.name ?? "未选择项目"}</strong>
+        {activeProject && (
+          <button type="button" className="text-action" onClick={() => renameProject(activeProject)}>
+            重命名
+          </button>
+        )}
         <button type="button" className="ghost wide" onClick={returnHome}>返回首页</button>
       </div>
       <nav className="steps">
@@ -1263,7 +1316,7 @@ function Sidebar({ step, goToStep, selectedTemplateName, completionStatus, activ
   );
 }
 
-function ProjectHome({ projects, createProject, openProject, askDeleteProject }) {
+function ProjectHome({ projects, createProject, openProject, renameProject, askDeleteProject }) {
   function handleCardKeyDown(event, project) {
     if (event.key === "Enter" || event.key === " ") {
       event.preventDefault();
@@ -1278,7 +1331,10 @@ function ProjectHome({ projects, createProject, openProject, askDeleteProject })
           <h1>项目库</h1>
           <p>新建或继续编辑项目，素材、配置和视频结果会实时保存。</p>
         </div>
-        <span>{projects.length} / {PROJECT_LIMIT} 个项目</span>
+        <div className="project-home-stats">
+          <span>{projects.length} / {PROJECT_LIMIT} 个项目</span>
+          <span>已用容量 {PROJECT_STORAGE_USED_GB}GB / {PROJECT_STORAGE_LIMIT_GB}GB</span>
+        </div>
       </div>
 
       <section className="history-projects" aria-label="项目卡片">
@@ -1317,6 +1373,17 @@ function ProjectHome({ projects, createProject, openProject, askDeleteProject })
                   }}
                 >
                   删除
+                </button>
+                <button
+                  type="button"
+                  className="project-card-rename"
+                  aria-label={`重命名 ${project.name}`}
+                  onClick={(event) => {
+                    event.stopPropagation();
+                    renameProject(project);
+                  }}
+                >
+                  重命名
                 </button>
                 <div className="project-card-cover">
                   <img
@@ -1449,7 +1516,10 @@ function GenerationManagerModal({ project, close, downloadOutput, downloadSelect
                   <div className="generation-video-copy">
                     <strong title={output.name}>{output.name}</strong>
                     <span>{output.shot}</span>
-                    <small>{output.generatedAt ?? "刚刚生成"}</small>
+                    <small>
+                      {output.generatedAt ?? "刚刚生成"}
+                      {!isGenerating && <> · 实际扣费 <PowerCost value={output.actualCost ?? 10} /></>}
+                    </small>
                   </div>
                   <button
                     type="button"
@@ -1591,7 +1661,7 @@ function UploadScreen({ goToStep, generatePreviewRows, deletedMaterials, setDele
                   <span>是否自动带入上次素材</span>
                 </label>
               </div>
-              <p>模特图片只需要上传 1 张正脸照。服装图片必传项只有正面平铺图；如需补充更多服装参考，可使用继续上传。首次上传后会被后台记住，刷新或关闭页面后自动带入。</p>
+              <p>模特图片只需要上传 1 张正脸照。服装图片总数最多 5 张：1 张正面平铺图 + 最多 4 张补充参考图；如需补充更多服装参考，可使用继续上传。素材按项目长期保存，并受账号容量上限管理。</p>
             </div>
           </div>
 
@@ -1623,7 +1693,7 @@ function UploadScreen({ goToStep, generatePreviewRows, deletedMaterials, setDele
             <div className="material-head">
               <div>
                 <strong>服装图片</strong>
-                <span>只保留正面平铺图，其他参考通过继续上传补充</span>
+                <span>必传 1 张正面平铺图，最多再补充 4 张参考图</span>
               </div>
             </div>
             <div className="material-grid garment">
@@ -1640,7 +1710,7 @@ function UploadScreen({ goToStep, generatePreviewRows, deletedMaterials, setDele
                   onOpenSpec={() => setActiveSpec({ ...item, type: "服装图片" })}
                 />
               ))}
-              <AddMaterialCard label="继续上传" desc="补充更多服装细节" />
+              <AddMaterialCard label="继续上传" desc="最多补充 4 张参考图" />
             </div>
           </div>
 
@@ -1651,7 +1721,7 @@ function UploadScreen({ goToStep, generatePreviewRows, deletedMaterials, setDele
               goToStep("step-generate", 3);
             }}
           >
-            生成预览图 <PowerCost value={12} />
+            生成预览图 预计消耗 <PowerCost value={12} />
           </button>
         </div>
         <InfoPanel />
@@ -1764,7 +1834,7 @@ function VideoGenerationScreen({
         <HeaderBlock
           label="步骤 3"
           title="视频生成与配置"
-          desc="男装车内 OOTD 模板后台默认使用 6 张参考样本，一次生成 6 张对应预览图。每张预览图都可以单独重抽，并拥有自己的动作与风景配置。"
+          desc={`当前模板配置为 ${CURRENT_TEMPLATE_PREVIEW_COUNT} 张预览图。每张预览图都可以单独重抽，并拥有自己的动作与风景配置；提示词会保存当前编辑态，也会在每条视频生成时保存快照。`}
         />
       </div>
 
@@ -1776,6 +1846,7 @@ function VideoGenerationScreen({
               <button className={model === "open" ? "selected" : ""} onClick={() => setModel("open")}>开源模型</button>
               <button className={model === "closed" ? "selected" : ""} onClick={() => setModel("closed")}>闭源模型</button>
             </div>
+            <small className="control-note">前端负责调参，模型由工作流内部调用。</small>
           </div>
           <div className="global-control">
             <div className="panel-title">视频数量</div>
@@ -1783,19 +1854,20 @@ function VideoGenerationScreen({
               <button onClick={() => setCount(Math.max(1, count - 1))}>−</button>
               <strong>{count}</strong>
               <span>条</span>
-              <button onClick={() => setCount(Math.min(5, count + 1))}>＋</button>
+              <button onClick={() => setCount(Math.min(MAX_ROW_VIDEO_COUNT, count + 1))}>＋</button>
             </div>
+            <small className="control-note">单张预览图一次最多 {MAX_ROW_VIDEO_COUNT} 条，项目最多 {MAX_PROJECT_VIDEO_COUNT} 条；修改数量只影响下一次生成。</small>
           </div>
           <div className="global-control action-global-control">
             <div className="panel-title">快捷配置</div>
             <button className="primary ai-inline-button cost-button" onClick={aiConfigureAll}>
-              AI一键配置 <PowerCost value={aiConfigureCost} />
+              AI一键配置 预计消耗 <PowerCost value={aiConfigureCost} />
             </button>
           </div>
         </div>
         <div className="sticky-generate">
           <button className="primary batch-generate cost-button" onClick={onGenerate}>
-            批量生成视频 <PowerCost value={batchVideoCost} />
+            批量生成视频 预计消耗 <PowerCost value={batchVideoCost} />
           </button>
           <button className="download-button batch-download" onClick={downloadResult}>批量下载</button>
         </div>
@@ -2000,7 +2072,7 @@ function PreviewGenerationRow({
         </button>
         <div className="row-preview-actions">
           <button className="ghost cost-button" onClick={() => rerollPreview(row.id)}>
-            {isPreviewGenerated(row) ? "重抽此图" : "生成此图"} <PowerCost value={2} />
+            {isPreviewGenerated(row) ? "重抽此图" : "生成此图"} 预计消耗 <PowerCost value={2} />
           </button>
         </div>
       </div>
@@ -2092,6 +2164,7 @@ function PreviewGenerationRow({
                   ) : (
                     <>
                       <em>00:05</em>
+                      <small className="actual-cost-label">实际扣费 <PowerCost value={item.actualCost ?? 10} /></small>
                       <span className="video-preview-hint">预览中 · 单击放大</span>
                       <div className="video-card-actions" aria-label={`视频 ${videoIndex + 1}操作`}>
                         <button
@@ -2125,7 +2198,7 @@ function PreviewGenerationRow({
               ))}
               <button type="button" className="video-generate-card" onClick={() => startVideoGeneration(1)}>
                 <strong>生成视频</strong>
-                <small><PowerCost value={10} suffix="/条" /></small>
+                <small>预计消耗 <PowerCost value={10} suffix="/条" /></small>
               </button>
             </div>
         </div>
@@ -2150,7 +2223,7 @@ function MiniPromptBlock({ title, examples, value, setValue, prompt, setPrompt, 
     <div className="mini-prompt-card">
       <div className="mini-prompt-head">
         <strong>{title}</strong>
-        <button className="cost-button" onClick={onPolish}>AI润色 <PowerCost value={1} /></button>
+        <button className="cost-button" onClick={onPolish}>AI润色 预计消耗 <PowerCost value={1} /></button>
       </div>
       <div className="mini-chips">
         {examples.map((example) => (

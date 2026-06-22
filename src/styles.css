@@ -224,6 +224,20 @@ button {
   word-break: break-word;
 }
 
+.text-action {
+  width: fit-content;
+  border: 0;
+  background: transparent;
+  color: var(--green);
+  font-size: 12px;
+  font-weight: 850;
+  padding: 0;
+}
+
+.text-action:hover {
+  text-decoration: underline;
+}
+
 .steps {
   display: flex;
   flex-direction: column;
@@ -409,7 +423,14 @@ button {
   line-height: 1.6;
 }
 
-.project-home-heading > span {
+.project-home-stats {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.project-home-stats > span {
   display: inline-flex;
   align-items: center;
   flex: 0 0 auto;
@@ -693,8 +714,30 @@ button {
   transition: opacity 0.16s ease, transform 0.16s ease, border-color 0.16s ease, background 0.16s ease;
 }
 
+.project-card-rename {
+  position: absolute;
+  top: 10px;
+  right: 74px;
+  z-index: 3;
+  min-width: 68px;
+  height: 30px;
+  padding: 0 12px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.93);
+  color: var(--green);
+  font-size: 13px;
+  font-weight: 800;
+  opacity: 0;
+  pointer-events: none;
+  transform: translateY(-4px);
+  transition: opacity 0.16s ease, transform 0.16s ease, border-color 0.16s ease, background 0.16s ease;
+}
+
 .project-card:hover .project-card-delete,
-.project-card:focus-within .project-card-delete {
+.project-card:focus-within .project-card-delete,
+.project-card:hover .project-card-rename,
+.project-card:focus-within .project-card-rename {
   opacity: 1;
   pointer-events: auto;
   transform: translateY(0);
@@ -703,6 +746,11 @@ button {
 .project-card-delete:hover {
   border-color: #f2b7af;
   background: #fff1ee;
+}
+
+.project-card-rename:hover {
+  border-color: var(--green-line);
+  background: var(--green-soft);
 }
 
 .danger-text {
@@ -1694,6 +1742,14 @@ textarea:focus {
 
 .global-control {
   min-width: 0;
+}
+
+.control-note {
+  display: block;
+  margin-top: 7px;
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.45;
 }
 
 .compact-segmented,
@@ -4195,6 +4251,27 @@ textarea:focus {
 .video-generate-card .power-cost {
   justify-content: center;
   white-space: nowrap;
+}
+
+.actual-cost-label {
+  position: absolute;
+  left: 12px;
+  bottom: 38px;
+  z-index: 2;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  min-height: 24px;
+  padding: 0 8px;
+  border-radius: 999px;
+  background: rgba(17, 19, 18, 0.72);
+  color: #fff;
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.actual-cost-label .power-cost {
+  color: #fff;
 }
 
 .template-modal {
