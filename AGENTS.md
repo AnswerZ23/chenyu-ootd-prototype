@@ -83,6 +83,7 @@ Video-generation module decisions:
 - Compute-related UI must not display text like "12算力" or "10算力/条". Use the compute icon plus a number instead.
 - Generation-related buttons must display estimated compute cost with the compute icon: image generation costs 2 per image, image reroll costs 2 per image, video generation costs 10 per video, and row-level video generation shows icon + 10 /条.
 - Estimated compute and actual billing are separate states. Before a workflow call, show "预计消耗" with the compute icon; after generation completes, show "实际扣费" on generated video records.
+- Cost labels inside action buttons should use a compact cost badge, separating the primary action text from "预计消耗" and the compute icon. Do not place long cost copy as plain button text because it breaks the video-generation toolbar layout.
 - Newly generated videos use a uniform 30-second countdown/progress simulation before becoming downloadable. After 30 seconds, the same record must move from generating/queued state into downloadable outputs across the project home, sidebar generation management, and step 3.
 - The empty row-level "生成视频" placeholder card must not show an extra plus/circle icon. It should only show "生成视频" plus the compute icon and "10/条" in a clean centered layout.
 - AI润色 costs 1 per action. AI一键配置 costs the total number of prompt polish actions it will perform, currently six preview rows × action/scene = icon + 12.

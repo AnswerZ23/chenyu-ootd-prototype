@@ -142,8 +142,52 @@ button {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 8px;
+  gap: 10px;
   white-space: nowrap;
+}
+
+.cost-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 26px;
+  padding: 0 8px;
+  border-radius: 999px;
+  border: 1px solid rgba(11, 125, 53, 0.18);
+  background: rgba(231, 247, 237, 0.9);
+  color: var(--green);
+  font-size: 12px;
+  font-weight: 850;
+  line-height: 1;
+  white-space: nowrap;
+}
+
+.cost-badge > span {
+  color: currentColor;
+  font-weight: 850;
+}
+
+.primary .cost-badge,
+.primary-dark .cost-badge {
+  border-color: rgba(255, 255, 255, 0.2);
+  background: rgba(255, 255, 255, 0.13);
+  color: #fff;
+}
+
+.cost-badge .power-cost {
+  gap: 4px;
+}
+
+.cost-badge .power-cost-icon {
+  width: 15px;
+  height: 15px;
+}
+
+.cost-badge .power-cost-icon::before {
+  left: 5px;
+  top: 3px;
+  width: 5px;
+  height: 9px;
 }
 
 .primary .power-cost-icon,
@@ -1711,7 +1755,8 @@ textarea:focus {
   top: 70px;
   z-index: 8;
   display: flex;
-  align-items: end;
+  flex-wrap: wrap;
+  align-items: flex-start;
   justify-content: space-between;
   gap: 24px;
   border: 1px solid var(--line);
@@ -1734,10 +1779,11 @@ textarea:focus {
 
 .global-controls {
   display: grid;
-  grid-template-columns: 230px 210px 198px;
+  grid-template-columns: minmax(200px, 230px) minmax(180px, 210px) minmax(230px, 270px);
   gap: 18px;
   justify-content: start;
-  align-items: end;
+  align-items: start;
+  max-width: 100%;
 }
 
 .global-control {
@@ -1760,10 +1806,11 @@ textarea:focus {
 
 .ai-inline-button {
   width: 100%;
-  min-width: 186px;
-  height: 44px;
+  min-width: 230px;
+  height: 46px;
   margin-top: 8px;
-  padding: 0 18px;
+  padding: 0 12px 0 16px;
+  justify-content: space-between;
 }
 
 .sticky-generate {
@@ -1772,13 +1819,20 @@ textarea:focus {
   justify-content: flex-end;
   gap: 12px;
   margin-left: auto;
+  align-self: center;
+  flex-wrap: wrap;
 }
 
 .sticky-generate .primary,
 .sticky-generate .download-button {
-  height: 44px;
-  padding: 0 20px;
+  height: 46px;
+  padding: 0 14px 0 18px;
   white-space: nowrap;
+}
+
+.sticky-generate .primary {
+  justify-content: space-between;
+  min-width: 244px;
 }
 
 .download-button {
@@ -2317,6 +2371,12 @@ textarea:focus {
   color: var(--green);
   font-size: 13px;
   font-weight: 850;
+}
+
+.video-generate-card .cost-badge {
+  background: transparent;
+  border: 0;
+  padding: 0;
 }
 
 .video-generate-card:hover {

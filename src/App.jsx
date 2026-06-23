@@ -1256,6 +1256,15 @@ function PowerCost({ value, suffix = "" }) {
   );
 }
 
+function CostBadge({ value, suffix = "", label = "预计消耗" }) {
+  return (
+    <span className="cost-badge">
+      <span>{label}</span>
+      <PowerCost value={value} suffix={suffix} />
+    </span>
+  );
+}
+
 function Sidebar({ step, goToStep, selectedTemplateName, completionStatus, activeProject, returnHome, renameProject, openGenerationManager }) {
   const items = [
     { id: 1, title: "选择模板", desc: selectedTemplateName, target: "step-template" },
@@ -1721,7 +1730,8 @@ function UploadScreen({ goToStep, generatePreviewRows, deletedMaterials, setDele
               goToStep("step-generate", 3);
             }}
           >
-            生成预览图 预计消耗 <PowerCost value={12} />
+            <span>生成预览图</span>
+            <CostBadge value={12} />
           </button>
         </div>
         <InfoPanel />
@@ -1861,13 +1871,15 @@ function VideoGenerationScreen({
           <div className="global-control action-global-control">
             <div className="panel-title">快捷配置</div>
             <button className="primary ai-inline-button cost-button" onClick={aiConfigureAll}>
-              AI一键配置 预计消耗 <PowerCost value={aiConfigureCost} />
+              <span>AI一键配置</span>
+              <CostBadge value={aiConfigureCost} />
             </button>
           </div>
         </div>
         <div className="sticky-generate">
           <button className="primary batch-generate cost-button" onClick={onGenerate}>
-            批量生成视频 预计消耗 <PowerCost value={batchVideoCost} />
+            <span>批量生成视频</span>
+            <CostBadge value={batchVideoCost} />
           </button>
           <button className="download-button batch-download" onClick={downloadResult}>批量下载</button>
         </div>
@@ -2072,7 +2084,8 @@ function PreviewGenerationRow({
         </button>
         <div className="row-preview-actions">
           <button className="ghost cost-button" onClick={() => rerollPreview(row.id)}>
-            {isPreviewGenerated(row) ? "重抽此图" : "生成此图"} 预计消耗 <PowerCost value={2} />
+            <span>{isPreviewGenerated(row) ? "重抽此图" : "生成此图"}</span>
+            <CostBadge value={2} />
           </button>
         </div>
       </div>
@@ -2198,7 +2211,7 @@ function PreviewGenerationRow({
               ))}
               <button type="button" className="video-generate-card" onClick={() => startVideoGeneration(1)}>
                 <strong>生成视频</strong>
-                <small>预计消耗 <PowerCost value={10} suffix="/条" /></small>
+                <CostBadge value={10} suffix="/条" />
               </button>
             </div>
         </div>
@@ -2223,7 +2236,10 @@ function MiniPromptBlock({ title, examples, value, setValue, prompt, setPrompt, 
     <div className="mini-prompt-card">
       <div className="mini-prompt-head">
         <strong>{title}</strong>
-        <button className="cost-button" onClick={onPolish}>AI润色 预计消耗 <PowerCost value={1} /></button>
+        <button className="cost-button" onClick={onPolish}>
+          <span>AI润色</span>
+          <CostBadge value={1} />
+        </button>
       </div>
       <div className="mini-chips">
         {examples.map((example) => (
