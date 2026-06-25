@@ -323,6 +323,11 @@ const PROJECT_STORAGE_USED_GB = 0.74;
 const MAX_PROJECT_VIDEO_COUNT = 30;
 const MAX_ROW_VIDEO_COUNT = 5;
 const CURRENT_TEMPLATE_PREVIEW_COUNT = initialPreviewRows.length;
+const BALANCE_AMOUNT = 12000;
+const PREVIEW_IMAGE_PRICE = 0.5;
+const VIDEO_GENERATION_PRICE = 1.5;
+const AI_POLISH_PRICE = 0.1;
+const AI_CONFIG_PRICE = 0.6;
 const PROJECT_STORAGE_KEY = "chenyu-ootd-v2-projects";
 const PROJECT_VIEW_STORAGE_KEY = "chenyu-ootd-v2-view";
 const PROJECT_ACTIVE_STORAGE_KEY = "chenyu-ootd-v2-active-project";
@@ -423,8 +428,8 @@ function buildOutputVideo(source, index, options = {}) {
     progress: isGenerating ? options.progress ?? 36 : 100,
     previewRowId: options.previewRowId,
     promptSnapshot: options.promptSnapshot,
-    estimatedCost: options.estimatedCost ?? 10,
-    actualCost: options.actualCost ?? (isGenerating ? undefined : 10),
+    estimatedCost: options.estimatedCost ?? VIDEO_GENERATION_PRICE,
+    actualCost: options.actualCost ?? (isGenerating ? undefined : VIDEO_GENERATION_PRICE),
     generationStartedAt: isGenerating ? options.generationStartedAt ?? Date.now() : undefined,
     generatedAt: options.generatedAt ?? formatSavedTime(new Date(Date.now() - index * 7 * 60 * 1000)),
   };
@@ -491,7 +496,7 @@ function updateProjectGenerationProgress(project, now = Date.now()) {
         ...output,
         status: "可下载",
         progress: 100,
-        actualCost: output.actualCost ?? 10,
+        actualCost: normalizeMoneyCost(output.actualCost, VIDEO_GENERATION_PRICE),
         generationStartedAt: undefined,
         generatedAt: formatSavedTime(new Date(now)),
       });
@@ -538,6 +543,13 @@ function normalizePublicAssetPath(value) {
   return value;
 }
 
+function normalizeMoneyCost(value, fallback) {
+  const number = Number(value);
+  if (!Number.isFinite(number) || number <= 0) return fallback;
+  if (number > 5) return fallback;
+  return number;
+}
+
 function normalizeMaterialImages(materials) {
   if (!materials || typeof materials !== "object") return materials;
   return Object.fromEntries(
@@ -570,12 +582,15 @@ function normalizeOutputList(project, outputs = []) {
       ...fallbackOutput,
       ...output,
     };
+    const isGenerating = isGeneratingOutput(output);
     return {
       ...mergedOutput,
       poster: normalizePublicAssetPath(mergedOutput.poster),
-      status: isGeneratingOutput(output) ? output.status : "可下载",
-      progress: isGeneratingOutput(output) ? output.progress ?? 42 : 100,
-      generationStartedAt: isGeneratingOutput(output)
+      status: isGenerating ? output.status : "可下载",
+      progress: isGenerating ? output.progress ?? 42 : 100,
+      estimatedCost: normalizeMoneyCost(mergedOutput.estimatedCost, VIDEO_GENERATION_PRICE),
+      actualCost: isGenerating ? undefined : normalizeMoneyCost(mergedOutput.actualCost, VIDEO_GENERATION_PRICE),
+      generationStartedAt: isGenerating
         ? output.generationStartedAt ?? Date.now() - ((output.progress ?? 42) / 100) * VIDEO_GENERATION_DURATION_MS
         : undefined,
     };
@@ -972,7 +987,7 @@ export function App() {
           ...completed,
           status: "可下载",
           progress: 100,
-          actualCost: completed.actualCost ?? 10,
+          actualCost: normalizeMoneyCost(completed.actualCost, VIDEO_GENERATION_PRICE),
           generatedAt: formatSavedTime(),
         };
         const nextProject = {
@@ -1235,7 +1250,7 @@ function TopBar() {
         </div>
       </div>
       <div className="top-actions">
-        <div className="balance">可用剩余算力 <PowerCost value="12,450" /></div>
+        <div className="balance">可用余额 <MoneyAmount value={BALANCE_AMOUNT} /></div>
         <button className="icon-button" aria-label="通知">通知</button>
         <div className="user">
           <span className="avatar">A</span>
@@ -1246,11 +1261,20 @@ function TopBar() {
   );
 }
 
-function PowerCost({ value, suffix = "" }) {
+function formatMoney(value) {
+  const number = Number(value);
+  if (!Number.isFinite(number)) return value;
+  return number.toLocaleString("zh-CN", {
+    minimumFractionDigits: number % 1 === 0 ? 0 : 1,
+    maximumFractionDigits: 2,
+  });
+}
+
+function MoneyAmount({ value, suffix = "" }) {
   return (
-    <span className="power-cost" aria-label={`${value}算力${suffix}`}>
-      <span className="power-cost-icon" aria-hidden="true" />
-      <strong>{value}</strong>
+    <span className="money-amount" aria-label={`${formatMoney(value)}元${suffix}`}>
+      <span className="money-icon" aria-hidden="true">¥</span>
+      <strong>{formatMoney(value)}</strong>
       {suffix && <em>{suffix}</em>}
     </span>
   );
@@ -1260,7 +1284,7 @@ function CostBadge({ value, suffix = "", label = "预计消耗" }) {
   return (
     <span className="cost-badge">
       <span>{label}</span>
-      <PowerCost value={value} suffix={suffix} />
+      <MoneyAmount value={value} suffix={suffix} />
     </span>
   );
 }
@@ -1527,7 +1551,7 @@ function GenerationManagerModal({ project, close, downloadOutput, downloadSelect
                     <span>{output.shot}</span>
                     <small>
                       {output.generatedAt ?? "刚刚生成"}
-                      {!isGenerating && <> · 实际扣费 <PowerCost value={output.actualCost ?? 10} /></>}
+                      {!isGenerating && <> · 实际扣费 <MoneyAmount value={output.actualCost ?? VIDEO_GENERATION_PRICE} /></>}
                     </small>
                   </div>
                   <button
@@ -1731,7 +1755,7 @@ function UploadScreen({ goToStep, generatePreviewRows, deletedMaterials, setDele
             }}
           >
             <span>生成预览图</span>
-            <CostBadge value={12} />
+            <CostBadge value={CURRENT_TEMPLATE_PREVIEW_COUNT * PREVIEW_IMAGE_PRICE} />
           </button>
         </div>
         <InfoPanel />
@@ -1835,8 +1859,8 @@ function VideoGenerationScreen({
   activeProject,
 }) {
   const [focusedVideoRowId, setFocusedVideoRowId] = useState(null);
-  const batchVideoCost = previewRows.length * count * 10;
-  const aiConfigureCost = previewRows.length * 2;
+  const batchVideoCost = previewRows.length * count * VIDEO_GENERATION_PRICE;
+  const aiConfigureCost = AI_CONFIG_PRICE;
 
   return (
     <section className="stage video-config-stage">
@@ -2085,7 +2109,7 @@ function PreviewGenerationRow({
         <div className="row-preview-actions">
           <button className="ghost cost-button" onClick={() => rerollPreview(row.id)}>
             <span>{isPreviewGenerated(row) ? "重抽此图" : "生成此图"}</span>
-            <CostBadge value={2} />
+            <CostBadge value={PREVIEW_IMAGE_PRICE} />
           </button>
         </div>
       </div>
@@ -2177,13 +2201,13 @@ function PreviewGenerationRow({
                   ) : (
                     <>
                       <em>00:05</em>
-                      <small className="actual-cost-label">实际扣费 <PowerCost value={item.actualCost ?? 10} /></small>
+                      <small className="actual-cost-label">实际扣费 <MoneyAmount value={item.actualCost ?? VIDEO_GENERATION_PRICE} /></small>
                       <span className="video-preview-hint">预览中 · 单击放大</span>
                       <div className="video-card-actions" aria-label={`视频 ${videoIndex + 1}操作`}>
                         <button
                           type="button"
                           className="video-icon-button"
-                          aria-label={`重抽视频 ${videoIndex + 1}，消耗 10 算力`}
+                          aria-label={`重抽视频 ${videoIndex + 1}，消耗 ${VIDEO_GENERATION_PRICE} 元余额`}
                           onClick={(event) => handleVideoAction(event, "reroll", item.id, videoIndex)}
                         >
                           ↻
@@ -2211,7 +2235,7 @@ function PreviewGenerationRow({
               ))}
               <button type="button" className="video-generate-card" onClick={() => startVideoGeneration(1)}>
                 <strong>生成视频</strong>
-                <CostBadge value={10} suffix="/条" />
+                <CostBadge value={VIDEO_GENERATION_PRICE} suffix="/条" />
               </button>
             </div>
         </div>
@@ -2238,7 +2262,7 @@ function MiniPromptBlock({ title, examples, value, setValue, prompt, setPrompt, 
         <strong>{title}</strong>
         <button className="cost-button" onClick={onPolish}>
           <span>AI润色</span>
-          <CostBadge value={1} />
+          <CostBadge value={AI_POLISH_PRICE} />
         </button>
       </div>
       <div className="mini-chips">

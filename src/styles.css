@@ -93,11 +93,11 @@ button {
   margin-left: 6px;
 }
 
-.balance .power-cost {
+.balance .money-amount {
   margin-left: 7px;
 }
 
-.power-cost {
+.money-amount {
   display: inline-flex;
   align-items: center;
   gap: 5px;
@@ -107,35 +107,29 @@ button {
   font-weight: 850;
 }
 
-.power-cost strong {
+.money-amount strong {
   margin: 0;
   font: inherit;
 }
 
-.power-cost em {
+.money-amount em {
   color: currentColor;
   font-style: normal;
   font-weight: 750;
 }
 
-.power-cost-icon {
-  position: relative;
+.money-icon {
+  display: inline-grid;
+  place-items: center;
   width: 16px;
   height: 16px;
   border-radius: 999px;
   background: linear-gradient(145deg, #16211b, #0a7d35);
+  color: #fff;
+  font-size: 11px;
+  font-weight: 900;
+  line-height: 1;
   box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.24);
-}
-
-.power-cost-icon::before {
-  content: "";
-  position: absolute;
-  left: 5px;
-  top: 3px;
-  width: 6px;
-  height: 10px;
-  background: #bff4cf;
-  clip-path: polygon(46% 0, 100% 0, 64% 44%, 100% 44%, 32% 100%, 48% 58%, 0 58%);
 }
 
 .cost-button {
@@ -174,30 +168,20 @@ button {
   color: #fff;
 }
 
-.cost-badge .power-cost {
+.cost-badge .money-amount {
   gap: 4px;
 }
 
-.cost-badge .power-cost-icon {
+.cost-badge .money-icon {
   width: 15px;
   height: 15px;
+  font-size: 10px;
 }
 
-.cost-badge .power-cost-icon::before {
-  left: 5px;
-  top: 3px;
-  width: 5px;
-  height: 9px;
-}
-
-.primary .power-cost-icon,
-.primary-dark .power-cost-icon {
+.primary .money-icon,
+.primary-dark .money-icon {
   background: rgba(255, 255, 255, 0.18);
-}
-
-.primary .power-cost-icon::before,
-.primary-dark .power-cost-icon::before {
-  background: #ffffff;
+  color: #fff;
 }
 
 .icon-button {
@@ -4308,7 +4292,7 @@ textarea:focus {
   font-size: 18px;
 }
 
-.video-generate-card .power-cost {
+.video-generate-card .money-amount {
   justify-content: center;
   white-space: nowrap;
 }
@@ -4330,7 +4314,7 @@ textarea:focus {
   font-weight: 800;
 }
 
-.actual-cost-label .power-cost {
+.actual-cost-label .money-amount {
   color: #fff;
 }
 

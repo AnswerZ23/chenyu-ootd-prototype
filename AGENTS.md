@@ -80,14 +80,14 @@ Video-generation module decisions:
 - Sidebar completion checks are state-based: template is done after a template is selected; upload is done only when required materials are present; video generation is done after either batch or single-row video generation starts.
 - Multi-video row results should show at least two video-card spaces in the generated-video column; additional videos scroll horizontally. Keep the configuration column tighter so the video area has room.
 - Row-level download means downloading the currently selected generated video card. Batch download downloads all generated videos and does not use row checkboxes.
-- Compute-related UI must not display text like "12算力" or "10算力/条". Use the compute icon plus a number instead.
-- Generation-related buttons must display estimated compute cost with the compute icon: image generation costs 2 per image, image reroll costs 2 per image, video generation costs 10 per video, and row-level video generation shows icon + 10 /条.
-- Estimated compute and actual billing are separate states. Before a workflow call, show "预计消耗" with the compute icon; after generation completes, show "实际扣费" on generated video records.
-- Cost labels inside action buttons should use a compact cost badge, separating the primary action text from "预计消耗" and the compute icon. Do not place long cost copy as plain button text because it breaks the video-generation toolbar layout.
+- Balance-related UI must not use the old credit wording. Use a yuan/balance icon plus the RMB amount instead.
+- Generation-related buttons must display estimated balance cost with the yuan icon: preview image generation costs 0.5 yuan per image, preview reroll costs 0.5 yuan per image, video generation costs 1.5 yuan per video, and row-level video generation shows yuan icon + 1.5 /条.
+- Estimated cost and actual billing are separate states. Before a workflow call, show "预计消耗" with the yuan icon; after generation completes, show "实际扣费" on generated video records.
+- Cost labels inside action buttons should use a compact cost badge, separating the primary action text from "预计消耗" and the yuan icon. Do not place long cost copy as plain button text because it breaks the video-generation toolbar layout.
 - Newly generated videos use a uniform 30-second countdown/progress simulation before becoming downloadable. After 30 seconds, the same record must move from generating/queued state into downloadable outputs across the project home, sidebar generation management, and step 3.
-- The empty row-level "生成视频" placeholder card must not show an extra plus/circle icon. It should only show "生成视频" plus the compute icon and "10/条" in a clean centered layout.
-- AI润色 costs 1 per action. AI一键配置 costs the total number of prompt polish actions it will perform, currently six preview rows × action/scene = icon + 12.
-- The top-right account balance label is "可用剩余算力" and the value uses the compute icon plus number.
+- The empty row-level "生成视频" placeholder card must not show an extra plus/circle icon. It should only show "生成视频" plus the yuan icon and "1.5/条" in a clean centered layout.
+- AI润色 costs 0.1 yuan per action. AI一键配置 costs 0.6 yuan per click.
+- The top-right account balance label is "可用余额" and the value uses the yuan icon plus amount.
 - The left-sidebar "生成管理" entry should be a stronger shortcut label, without secondary action copy like "查看生成进度" or "快速下载视频"; keep only the title and the count summary.
 - Generation manager selection controls use circular dots only: selected = solid dot, unselected = hollow dot. Do not use square checkbox visuals.
 - Model upload only requires one front-face photo. Do not show full-body or side-face model upload slots in the v2 workbench.
