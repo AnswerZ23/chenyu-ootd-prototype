@@ -97,7 +97,7 @@ Video-generation module decisions:
 - Row video-result carousels must keep stable card widths while the page scrolls. Do not use scroll-snap, hover-driven selected-video changes, or focus-state width enlargement that can cause the horizontal rail to jump between the first and last video after users scroll away and back.
 - In the upload step, the right-side material-guidance panel should sit lower so its top aligns with the upload material card area, not the top of the section header.
 - In each preview row, the single-row button text is "AI生成". Clicking it writes generated copy directly into the editable input textarea as a new line. Do not show a separate generated-copy area, "应用" action, or "已应用" state.
-- Quick prompt chips in the configuration area only update the editable input textarea. They must not trigger AI generation or overwrite hidden generation snapshots.
+- Quick prompt chips in the configuration area append their label into the editable input textarea as a new line. They must not overwrite existing text, trigger AI generation, or overwrite hidden generation snapshots.
 - Quick prompt suggestions must be based on the actual preview image content. The preview image has higher generation weight than prompt text, so do not offer weather/scene suggestions that conflict with the current image, such as asking for rain when the preview is clearly a bright car interior.
 
 Task-list decisions:

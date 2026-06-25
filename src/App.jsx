@@ -862,12 +862,14 @@ export function App() {
 
   function useExample(rowId, type, suggestion) {
     const label = typeof suggestion === "string" ? suggestion : suggestion.text;
+    const target = previewRows.find((row) => row.id === rowId);
+    if (!target) return;
 
     updatePreviewRow(
       rowId,
       type === "action"
-        ? { actionText: label }
-        : { sceneText: label }
+        ? { actionText: appendGeneratedPrompt(target.actionText, label) }
+        : { sceneText: appendGeneratedPrompt(target.sceneText, label) }
     );
   }
 
