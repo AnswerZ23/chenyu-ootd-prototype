@@ -890,8 +890,15 @@ export function App() {
   }
 
   function aiConfigureAll() {
+    const hasGeneratedPreview = previewRows.some((row) => isPreviewGenerated(row));
+    if (!hasGeneratedPreview) {
+      setToast("请先生成预览图");
+      return;
+    }
+
     setPreviewRows((rows) =>
       rows.map((row, index) => {
+        if (!isPreviewGenerated(row)) return row;
         const action = templatePreviewSamples[index]?.action ?? "系安全带";
         const scene = templatePreviewSamples[index]?.scene ?? "城市道路";
         const actionSuggestion = getActionSuggestions({ action, shot: templatePreviewSamples[index]?.shot ?? row.shot })[0];
@@ -900,16 +907,14 @@ export function App() {
         const scenePrompt = sceneSuggestion?.prompt ?? scenePolishMap[scene];
         return {
           ...row,
-          actionText: action,
-          sceneText: scene,
+          actionText: appendGeneratedPrompt(action, actionPrompt),
+          sceneText: appendGeneratedPrompt(scene, scenePrompt),
           actionPrompt,
           scenePrompt,
-          actionAppliedPrompt: actionPrompt,
-          sceneAppliedPrompt: scenePrompt,
         };
       })
     );
-    setToast("已按 6 张预览图画面生成并应用配置方案");
+    setToast("已生成配置并带入输入框");
   }
 
   function rerollPreview(rowId) {
@@ -2134,14 +2139,11 @@ function PreviewGenerationRow({
           prompt={row.actionPrompt}
           setPrompt={(value) => updatePreviewRow(row.id, { actionPrompt: value })}
           onPolish={() => polish(row.id, "action")}
-          applied={row.actionAppliedPrompt === row.actionPrompt}
           onApply={() => {
-            if (row.actionAppliedPrompt === row.actionPrompt) return;
             updatePreviewRow(row.id, {
               actionText: appendGeneratedPrompt(row.actionText, row.actionPrompt),
-              actionAppliedPrompt: row.actionPrompt,
             });
-            setToast("已应用动作 AI 文案");
+            setToast("已复制到动作输入框");
           }}
           onExample={(value) => useExample(row.id, "action", value)}
         />
@@ -2153,14 +2155,11 @@ function PreviewGenerationRow({
           prompt={row.scenePrompt}
           setPrompt={(value) => updatePreviewRow(row.id, { scenePrompt: value })}
           onPolish={() => polish(row.id, "scene")}
-          applied={row.sceneAppliedPrompt === row.scenePrompt}
           onApply={() => {
-            if (row.sceneAppliedPrompt === row.scenePrompt) return;
             updatePreviewRow(row.id, {
               sceneText: appendGeneratedPrompt(row.sceneText, row.scenePrompt),
-              sceneAppliedPrompt: row.scenePrompt,
             });
-            setToast("已应用风景 AI 文案");
+            setToast("已复制到风景输入框");
           }}
           onExample={(value) => useExample(row.id, "scene", value)}
         />
@@ -2270,7 +2269,7 @@ function PreviewGenerationRow({
   );
 }
 
-function MiniPromptBlock({ title, examples, value, setValue, prompt, setPrompt, applied, onPolish, onApply, onExample }) {
+function MiniPromptBlock({ title, examples, value, setValue, prompt, setPrompt, onPolish, onApply, onExample }) {
   return (
     <div className="mini-prompt-card">
       <div className="mini-prompt-head">
@@ -2290,8 +2289,8 @@ function MiniPromptBlock({ title, examples, value, setValue, prompt, setPrompt, 
       <textarea value={value} onChange={(event) => setValue(event.target.value)} maxLength={180} />
       <div className="polished-mini-wrap">
         <textarea className="polished-mini" value={prompt} onChange={(event) => setPrompt(event.target.value)} maxLength={320} />
-        <button type="button" className={applied ? "apply-polish-button applied" : "apply-polish-button"} onClick={onApply} disabled={applied}>
-          {applied ? "已应用" : "应用"}
+        <button type="button" className="apply-polish-button" onClick={onApply}>
+          应用
         </button>
       </div>
     </div>
@@ -2510,7 +2509,7 @@ function TaskScreen() {
                 </article>
                 <article>
                   <strong>动作 / 风景配置</strong>
-                  <span>4 组动作建议已应用</span>
+                  <span>4 组动作建议已带入</span>
                   <span>基于预览图画面生成</span>
                 </article>
               </div>
