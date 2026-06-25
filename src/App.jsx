@@ -314,6 +314,15 @@ function fallbackScenePrompt(row) {
   return `基于预览图“${row.shot}”的实际车内画面继续生成，保留当前光线、窗外环境和构图，不强行改变天气、昼夜或道路类型。`;
 }
 
+function appendGeneratedPrompt(currentValue, generatedValue) {
+  const copy = (generatedValue ?? "").trim();
+  const current = (currentValue ?? "").trimEnd();
+  if (!copy) return currentValue ?? "";
+  if (!current) return copy;
+  if (current.includes(copy)) return current;
+  return `${current}\n${copy}`;
+}
+
 const MAX_TASK_HISTORY = 10;
 const PROJECT_LIMIT = 10;
 const VIDEO_GENERATION_DURATION_MS = 30000;
@@ -327,7 +336,7 @@ const BALANCE_AMOUNT = 12000;
 const PREVIEW_IMAGE_PRICE = 0.5;
 const VIDEO_GENERATION_PRICE = 1.5;
 const AI_POLISH_PRICE = 0.1;
-const AI_CONFIG_PRICE = 0.6;
+const AI_CONFIG_PRICE = 1.2;
 const PROJECT_STORAGE_KEY = "chenyu-ootd-v2-projects";
 const PROJECT_VIEW_STORAGE_KEY = "chenyu-ootd-v2-view";
 const PROJECT_ACTIVE_STORAGE_KEY = "chenyu-ootd-v2-active-project";
@@ -2127,7 +2136,11 @@ function PreviewGenerationRow({
           onPolish={() => polish(row.id, "action")}
           applied={row.actionAppliedPrompt === row.actionPrompt}
           onApply={() => {
-            updatePreviewRow(row.id, { actionAppliedPrompt: row.actionPrompt });
+            if (row.actionAppliedPrompt === row.actionPrompt) return;
+            updatePreviewRow(row.id, {
+              actionText: appendGeneratedPrompt(row.actionText, row.actionPrompt),
+              actionAppliedPrompt: row.actionPrompt,
+            });
             setToast("已应用动作 AI 文案");
           }}
           onExample={(value) => useExample(row.id, "action", value)}
@@ -2142,7 +2155,11 @@ function PreviewGenerationRow({
           onPolish={() => polish(row.id, "scene")}
           applied={row.sceneAppliedPrompt === row.scenePrompt}
           onApply={() => {
-            updatePreviewRow(row.id, { sceneAppliedPrompt: row.scenePrompt });
+            if (row.sceneAppliedPrompt === row.scenePrompt) return;
+            updatePreviewRow(row.id, {
+              sceneText: appendGeneratedPrompt(row.sceneText, row.scenePrompt),
+              sceneAppliedPrompt: row.scenePrompt,
+            });
             setToast("已应用风景 AI 文案");
           }}
           onExample={(value) => useExample(row.id, "scene", value)}
@@ -2273,7 +2290,7 @@ function MiniPromptBlock({ title, examples, value, setValue, prompt, setPrompt, 
       <textarea value={value} onChange={(event) => setValue(event.target.value)} maxLength={180} />
       <div className="polished-mini-wrap">
         <textarea className="polished-mini" value={prompt} onChange={(event) => setPrompt(event.target.value)} maxLength={320} />
-        <button type="button" className={applied ? "apply-polish-button applied" : "apply-polish-button"} onClick={onApply}>
+        <button type="button" className={applied ? "apply-polish-button applied" : "apply-polish-button"} onClick={onApply} disabled={applied}>
           {applied ? "已应用" : "应用"}
         </button>
       </div>

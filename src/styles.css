@@ -2051,6 +2051,11 @@ textarea:focus {
   color: white;
 }
 
+.apply-polish-button:disabled {
+  cursor: default;
+  opacity: 1;
+}
+
 .row-video-card {
   display: grid;
   grid-template-rows: auto 1fr;
