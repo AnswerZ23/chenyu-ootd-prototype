@@ -69,7 +69,7 @@ Video-generation module decisions:
 - Single-preview video generation can request at most 5 videos at once. A whole project can retain at most 30 generated or generating video records.
 - Re-running generation appends new video records until the project limit is reached; it does not overwrite existing generated videos unless the user explicitly deletes or regenerates a specific video.
 - Prompt data must be stored in two layers: the current editable prompt state on each preview row and a prompt snapshot on every video record at generation time.
-- "AI一键配置" belongs at the module level and can fill all six row configurations using a mix of built-in prompt plans and AI-generated refinements.
+- "AI一键配置" belongs at the module level and can fill all six row configurations using a mix of built-in prompt plans and AI-generated output. It generates and immediately applies both action and scene prompts for every preview row.
 - The left sidebar's template step subtitle mirrors the selected template name, such as "男装车内 OOTD".
 - Do not show a separate template-summary card inside "视频生成与配置"; selected-template context belongs in the sidebar and template-selection step.
 - Preview confirmation is implicit: if the user does not reroll a preview image, it participates in video generation by default. Do not show "全部确认" or row-level "已确认/待确认" states.
@@ -86,7 +86,7 @@ Video-generation module decisions:
 - Cost labels inside action buttons should use a compact cost badge, separating the primary action text from "预计消耗" and the yuan icon. Do not place long cost copy as plain button text because it breaks the video-generation toolbar layout.
 - Newly generated videos use a uniform 30-second countdown/progress simulation before becoming downloadable. After 30 seconds, the same record must move from generating/queued state into downloadable outputs across the project home, sidebar generation management, and step 3.
 - The empty row-level "生成视频" placeholder card must not show an extra plus/circle icon. It should only show "生成视频" plus the yuan icon and "1.5/条" in a clean centered layout.
-- AI润色 costs 0.1 yuan per action. AI一键配置 costs 0.6 yuan per click.
+- AI生成 costs 0.1 yuan per action or scene prompt. AI一键配置 costs 0.6 yuan per click.
 - The top-right account balance label is "可用余额" and the value uses the yuan icon plus amount.
 - The left-sidebar "生成管理" entry should be a stronger shortcut label, without secondary action copy like "查看生成进度" or "快速下载视频"; keep only the title and the count summary.
 - Generation manager selection controls use circular dots only: selected = solid dot, unselected = hollow dot. Do not use square checkbox visuals.
@@ -95,7 +95,8 @@ Video-generation module decisions:
 - New projects start with ungenerated preview rows. The preview image area should show a clear "预览图待生成" empty state until the user clicks "生成预览图"; do not preload finished preview images for a just-created project.
 - Row video-result carousels must keep stable card widths while the page scrolls. Do not use scroll-snap, hover-driven selected-video changes, or focus-state width enlargement that can cause the horizontal rail to jump between the first and last video after users scroll away and back.
 - In the upload step, the right-side material-guidance panel should sit lower so its top aligns with the upload material card area, not the top of the section header.
-- In each preview row, AI copy has an explicit "应用" action beside the generated copy; after applying, show a visible applied state until the copy changes again.
+- In each preview row, the single-row button text is "AI生成". Clicking it only writes the generated-copy area and does not apply automatically. The generated copy has an explicit "应用" action beside it; after applying, show a visible applied state until the copy changes again.
+- Quick prompt chips in the configuration area only update the upper input textarea. They must not update or overwrite the lower generated-copy area.
 - Quick prompt suggestions must be based on the actual preview image content. The preview image has higher generation weight than prompt text, so do not offer weather/scene suggestions that conflict with the current image, such as asking for rain when the preview is clearly a bright car interior.
 
 Task-list decisions:

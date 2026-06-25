@@ -302,14 +302,14 @@ function getSceneSuggestions(row) {
 
 function fallbackActionPrompt(row) {
   if (!isPreviewGenerated(row)) {
-    return "请先生成预览图，再基于实际画面润色动作提示词。";
+    return "请先生成预览图，再基于实际画面生成动作提示词。";
   }
   return `基于预览图“${row.shot}”的实际画面继续生成，保留当前人物姿态、车内构图和服装展示重点，只做自然连续的小幅动作。`;
 }
 
 function fallbackScenePrompt(row) {
   if (!isPreviewGenerated(row)) {
-    return "请先生成预览图，再基于实际画面润色风景提示词。";
+    return "请先生成预览图，再基于实际画面生成风景提示词。";
   }
   return `基于预览图“${row.shot}”的实际车内画面继续生成，保留当前光线、窗外环境和构图，不强行改变天气、昼夜或道路类型。`;
 }
@@ -852,19 +852,13 @@ export function App() {
   }
 
   function useExample(rowId, type, suggestion) {
-    const target = previewRows.find((row) => row.id === rowId);
     const label = typeof suggestion === "string" ? suggestion : suggestion.text;
-    const prompt = typeof suggestion === "string"
-      ? type === "action"
-        ? actionPolishMap[suggestion] ?? fallbackActionPrompt(target)
-        : scenePolishMap[suggestion] ?? fallbackScenePrompt(target)
-      : suggestion.prompt;
 
     updatePreviewRow(
       rowId,
       type === "action"
-        ? { actionText: label, actionPrompt: prompt }
-        : { sceneText: label, scenePrompt: prompt }
+        ? { actionText: label }
+        : { sceneText: label }
     );
   }
 
@@ -876,13 +870,13 @@ export function App() {
       updatePreviewRow(rowId, {
         actionPrompt: match ? match.prompt : fallbackActionPrompt(target),
       });
-      setToast("已按当前预览图画面润色动作");
+      setToast("已按当前预览图画面生成动作建议");
     } else {
       const match = getSceneSuggestions(target).find((item) => target.sceneText.includes(item.text.slice(0, 2)));
       updatePreviewRow(rowId, {
         scenePrompt: match ? match.prompt : fallbackScenePrompt(target),
       });
-      setToast("已按当前预览图画面润色风景");
+      setToast("已按当前预览图画面生成风景建议");
     }
   }
 
@@ -893,16 +887,20 @@ export function App() {
         const scene = templatePreviewSamples[index]?.scene ?? "城市道路";
         const actionSuggestion = getActionSuggestions({ action, shot: templatePreviewSamples[index]?.shot ?? row.shot })[0];
         const sceneSuggestion = getSceneSuggestions({ scene, shot: templatePreviewSamples[index]?.shot ?? row.shot })[0];
+        const actionPrompt = actionSuggestion?.prompt ?? actionPolishMap[action];
+        const scenePrompt = sceneSuggestion?.prompt ?? scenePolishMap[scene];
         return {
           ...row,
           actionText: action,
           sceneText: scene,
-          actionPrompt: actionSuggestion?.prompt ?? actionPolishMap[action],
-          scenePrompt: sceneSuggestion?.prompt ?? scenePolishMap[scene],
+          actionPrompt,
+          scenePrompt,
+          actionAppliedPrompt: actionPrompt,
+          sceneAppliedPrompt: scenePrompt,
         };
       })
     );
-    setToast("已按 6 张预览图画面生成配置方案");
+    setToast("已按 6 张预览图画面生成并应用配置方案");
   }
 
   function rerollPreview(rowId) {
@@ -2261,7 +2259,7 @@ function MiniPromptBlock({ title, examples, value, setValue, prompt, setPrompt, 
       <div className="mini-prompt-head">
         <strong>{title}</strong>
         <button className="cost-button" onClick={onPolish}>
-          <span>AI润色</span>
+          <span>AI生成</span>
           <CostBadge value={AI_POLISH_PRICE} />
         </button>
       </div>
