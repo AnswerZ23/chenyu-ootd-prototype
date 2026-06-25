@@ -2013,36 +2013,14 @@ textarea:focus {
 }
 
 .mini-prompt-card textarea {
-  min-height: 38px;
+  min-height: 86px;
   font-size: 13px;
   padding: 7px 10px;
+  line-height: 1.55;
 }
 
-.polished-mini-wrap {
-  position: relative;
-  margin-top: 8px;
-}
-
-.mini-prompt-card .polished-mini {
-  min-height: 58px;
-  padding-right: 82px;
-  background: #f5fbf7;
-  border-color: #dcefe3;
-}
-
-.apply-polish-button {
-  position: absolute;
-  right: 8px;
-  bottom: 8px;
-  height: 28px;
-  border: 1px solid var(--green-line);
-  border-radius: 7px;
-  background: white;
-  color: var(--green);
-  font-size: 12px;
-  font-weight: 800;
-  padding: 0 10px;
-  white-space: nowrap;
+.mini-prompt-card .mini-input-textarea {
+  resize: vertical;
 }
 
 .row-video-card {

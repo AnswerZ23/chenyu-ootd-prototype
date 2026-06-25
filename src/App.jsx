@@ -244,10 +244,10 @@ function createPreviewRows({ generated = true } = {}) {
     previewStatus: generated ? "已生成" : "待生成",
     previewGeneratedAt: generated ? formatSavedTime() : null,
     version: 1,
-    actionText: sample.action,
-    sceneText: sample.scene,
-    actionPrompt: actionSuggestionMap[sample.action]?.[0]?.prompt ?? actionPolishMap[sample.action],
-    scenePrompt: sceneSuggestionMap[sample.scene]?.[0]?.prompt ?? scenePolishMap[sample.scene],
+    actionText: "",
+    sceneText: "",
+    actionPrompt: "",
+    scenePrompt: "",
     videoStatus: "待生成",
   }));
 }
@@ -277,10 +277,10 @@ function hydrateGeneratedPreviewRows(rows = createEmptyPreviewRows()) {
       previewStatus: "已生成",
       previewGeneratedAt: formatSavedTime(),
       version: (current.version ?? 0) + 1,
-      actionText: current.actionText ?? sample.action,
-      sceneText: current.sceneText ?? sample.scene,
-      actionPrompt: current.actionPrompt ?? actionSuggestionMap[sample.action]?.[0]?.prompt ?? actionPolishMap[sample.action],
-      scenePrompt: current.scenePrompt ?? sceneSuggestionMap[sample.scene]?.[0]?.prompt ?? scenePolishMap[sample.scene],
+      actionText: current.actionText ?? "",
+      sceneText: current.sceneText ?? "",
+      actionPrompt: current.actionPrompt ?? "",
+      scenePrompt: current.scenePrompt ?? "",
       videoStatus: current.videoStatus ?? "待生成",
     };
   });
@@ -874,18 +874,28 @@ export function App() {
   function polish(rowId, type) {
     const target = previewRows.find((row) => row.id === rowId);
     if (!target) return;
+    if (!isPreviewGenerated(target)) {
+      setToast("请先生成预览图");
+      return;
+    }
     if (type === "action") {
       const match = getActionSuggestions(target).find((item) => target.actionText.includes(item.text.slice(0, 2)));
+      const suggestion = match ?? getActionSuggestions(target)[0];
+      const actionPrompt = suggestion?.prompt ?? fallbackActionPrompt(target);
       updatePreviewRow(rowId, {
-        actionPrompt: match ? match.prompt : fallbackActionPrompt(target),
+        actionText: appendGeneratedPrompt(target.actionText, actionPrompt),
+        actionPrompt,
       });
-      setToast("已按当前预览图画面生成动作建议");
+      setToast("已生成并写入动作输入框");
     } else {
       const match = getSceneSuggestions(target).find((item) => target.sceneText.includes(item.text.slice(0, 2)));
+      const suggestion = match ?? getSceneSuggestions(target)[0];
+      const scenePrompt = suggestion?.prompt ?? fallbackScenePrompt(target);
       updatePreviewRow(rowId, {
-        scenePrompt: match ? match.prompt : fallbackScenePrompt(target),
+        sceneText: appendGeneratedPrompt(target.sceneText, scenePrompt),
+        scenePrompt,
       });
-      setToast("已按当前预览图画面生成风景建议");
+      setToast("已生成并写入风景输入框");
     }
   }
 
@@ -901,14 +911,14 @@ export function App() {
         if (!isPreviewGenerated(row)) return row;
         const action = templatePreviewSamples[index]?.action ?? "系安全带";
         const scene = templatePreviewSamples[index]?.scene ?? "城市道路";
-        const actionSuggestion = getActionSuggestions({ action, shot: templatePreviewSamples[index]?.shot ?? row.shot })[0];
-        const sceneSuggestion = getSceneSuggestions({ scene, shot: templatePreviewSamples[index]?.shot ?? row.shot })[0];
+        const actionSuggestion = getActionSuggestions(row)[0];
+        const sceneSuggestion = getSceneSuggestions(row)[0];
         const actionPrompt = actionSuggestion?.prompt ?? actionPolishMap[action];
         const scenePrompt = sceneSuggestion?.prompt ?? scenePolishMap[scene];
         return {
           ...row,
-          actionText: appendGeneratedPrompt(action, actionPrompt),
-          sceneText: appendGeneratedPrompt(scene, scenePrompt),
+          actionText: appendGeneratedPrompt(row.actionText, actionPrompt),
+          sceneText: appendGeneratedPrompt(row.sceneText, scenePrompt),
           actionPrompt,
           scenePrompt,
         };
@@ -2136,32 +2146,18 @@ function PreviewGenerationRow({
           examples={getActionSuggestions(row)}
           value={row.actionText}
           setValue={(value) => updatePreviewRow(row.id, { actionText: value })}
-          prompt={row.actionPrompt}
-          setPrompt={(value) => updatePreviewRow(row.id, { actionPrompt: value })}
           onPolish={() => polish(row.id, "action")}
-          onApply={() => {
-            updatePreviewRow(row.id, {
-              actionText: appendGeneratedPrompt(row.actionText, row.actionPrompt),
-            });
-            setToast("已复制到动作输入框");
-          }}
           onExample={(value) => useExample(row.id, "action", value)}
+          placeholder="请输入动作要求，或点击 AI生成后继续修改"
         />
         <MiniPromptBlock
           title="风景"
           examples={getSceneSuggestions(row)}
           value={row.sceneText}
           setValue={(value) => updatePreviewRow(row.id, { sceneText: value })}
-          prompt={row.scenePrompt}
-          setPrompt={(value) => updatePreviewRow(row.id, { scenePrompt: value })}
           onPolish={() => polish(row.id, "scene")}
-          onApply={() => {
-            updatePreviewRow(row.id, {
-              sceneText: appendGeneratedPrompt(row.sceneText, row.scenePrompt),
-            });
-            setToast("已复制到风景输入框");
-          }}
           onExample={(value) => useExample(row.id, "scene", value)}
+          placeholder="请输入风景要求，或点击 AI生成后继续修改"
         />
       </div>
 
@@ -2269,7 +2265,7 @@ function PreviewGenerationRow({
   );
 }
 
-function MiniPromptBlock({ title, examples, value, setValue, prompt, setPrompt, onPolish, onApply, onExample }) {
+function MiniPromptBlock({ title, examples, value, setValue, onPolish, onExample, placeholder }) {
   return (
     <div className="mini-prompt-card">
       <div className="mini-prompt-head">
@@ -2286,13 +2282,7 @@ function MiniPromptBlock({ title, examples, value, setValue, prompt, setPrompt, 
           </button>
         ))}
       </div>
-      <textarea value={value} onChange={(event) => setValue(event.target.value)} maxLength={180} />
-      <div className="polished-mini-wrap">
-        <textarea className="polished-mini" value={prompt} onChange={(event) => setPrompt(event.target.value)} maxLength={320} />
-        <button type="button" className="apply-polish-button" onClick={onApply}>
-          应用
-        </button>
-      </div>
+      <textarea className="mini-input-textarea" value={value} onChange={(event) => setValue(event.target.value)} maxLength={520} placeholder={placeholder} />
     </div>
   );
 }
