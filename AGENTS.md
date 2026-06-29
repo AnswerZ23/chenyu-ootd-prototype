@@ -20,17 +20,17 @@ OOTD 2.0 project-mode decisions:
 - A project contains template selection, uploaded materials, preview rows, action/scene configuration, generated videos, and download actions.
 - Keep at most 10 projects. When the user tries to create the 11th project, show a blocking prompt and require manual deletion first; do not auto-delete old projects.
 - Project names are editable. Default names still follow the generated `YYMMDD-HHMM-NNN 模板名称` format, but users can rename a project from the project library or inside the workbench.
-- Template selection belongs on the project home above the new-project card. The first template is selected by default before project creation.
+- Template selection belongs on the project home as a top "模板库" module above the "项目库" heading and above the new-project card. The first template is selected by default before project creation.
 - Creating a project stores the currently selected template into that project name and project data. Once inside the project workbench, the template is locked and cannot be switched.
 - Project-mode storage should support returning later to continue editing. Do not assume uploaded resources expire after 18 hours in the product experience; expose account capacity, currently 2GB, as used capacity / total capacity on the project home.
 - Historical projects support entering and deleting. Deleting a project requires confirmation and removes that project's saved materials, configuration, previews, and video records.
 - Returning home, refreshing, or exiting should preserve the current project state in the prototype's local persistence.
-- The left sidebar is only shown inside a project workbench. It should show the current project name, the locked template name, and a return-home action.
+- The left sidebar is only shown inside a project workbench. It should show the current project name, the locked template video preview, the locked template name, and a return-home action.
 - Download entry points stay inside the project workbench. Do not recreate a separate task-center detail page for v2 unless the product direction changes again.
 - If a project has generated or generating videos, show a "生成管理" entry directly below the "视频生成与配置" sidebar step and above "使用指引" so users can find it immediately while entering step 3.
 - The "生成管理" modal should present generated videos by generation timeline, with a title area, "全选" control under the title, a top-right "下载选中文件" action, per-video circular selection controls, single-video download actions, and visible progress cards for generating videos.
 - The generation manager modal should use a multi-row grid, not a single endless horizontal row. On desktop, show 5 portrait video cards per row so 30 videos resolve into 6 rows × 5 columns with internal scrolling.
-- The project home should open as a project-card wall with a lightweight "项目库" heading and one short description. Do not show a large descriptive hero, "项目首页", or "历史项目" section title before the cards.
+- The project home should open with the "模板库" module first, then a lightweight "项目库" heading and one short description, then the project-card wall. Do not show a large descriptive hero, "项目首页", or "历史项目" section title before the cards.
 - Keep a clear visual gap between the project-home heading block and the project-card grid; the heading should breathe, not touch the cards.
 - "新建项目" is the first large square-like project card in the gallery, not a separate primary button floating outside the project list.
 - Project cards use one shared anatomy: top half visual preview, bottom half project name, latest save time, and video count. The preview area should place vertical video content inside the wide card frame with a centered portrait crop and blurred side-fill background, similar to HeyGen video library cards.

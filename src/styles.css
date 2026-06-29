@@ -266,6 +266,55 @@ button {
   font-weight: 850;
 }
 
+.sidebar-template-preview {
+  display: grid;
+  grid-template-columns: 56px minmax(0, 1fr);
+  gap: 10px;
+  align-items: center;
+  margin: 2px 0 4px;
+  padding: 8px;
+  border: 1px solid rgba(159, 214, 178, 0.68);
+  border-radius: 8px;
+  background:
+    linear-gradient(145deg, rgba(234, 247, 239, 0.96), rgba(255, 255, 255, 0.92));
+}
+
+.sidebar-template-preview video {
+  width: 56px;
+  height: 78px;
+  border-radius: 7px;
+  background: #101211;
+  object-fit: cover;
+  display: block;
+}
+
+.sidebar-template-preview div {
+  min-width: 0;
+  display: grid;
+  gap: 5px;
+}
+
+.sidebar-template-preview em {
+  color: var(--green);
+  font-size: 11px;
+  font-style: normal;
+  font-weight: 900;
+}
+
+.project-sidebar-head .sidebar-template-preview small {
+  display: block;
+  width: auto;
+  min-height: 0;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  color: #2b332f;
+  font-size: 13px;
+  line-height: 1.35;
+  white-space: normal;
+}
+
 .text-action {
   width: fit-content;
   border: 0;
@@ -448,7 +497,7 @@ button {
   justify-content: space-between;
   gap: 20px;
   width: min(1180px, 100%);
-  margin: 0 auto 50px;
+  margin: 0 auto 18px;
 }
 
 .project-home-heading h1 {
@@ -495,7 +544,7 @@ button {
 
 .home-template-panel {
   width: min(1180px, 100%);
-  margin: 0 auto 18px;
+  margin: 0 auto 26px;
 }
 
 .home-template-panel .template-stage {
@@ -503,7 +552,7 @@ button {
   border-radius: 8px;
   background: rgba(255, 255, 255, 0.94);
   box-shadow: 0 10px 26px rgba(17, 19, 18, 0.045);
-  padding: 18px 22px 16px;
+  padding: 20px 22px 18px;
 }
 
 .home-template-panel .header-block h1 {

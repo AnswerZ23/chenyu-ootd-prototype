@@ -420,6 +420,10 @@ function buildProjectName(id, template = "男装车内OOTD") {
   return `${id} ${template}`;
 }
 
+function formatTemplateName(template = "男装车内OOTD") {
+  return template.replace("车内OOTD", "车内 OOTD");
+}
+
 function getProjectCover(project, fallbackIndex = 0) {
   return project.cover ?? project.outputs?.[0]?.poster ?? frames[fallbackIndex % frames.length];
 }
@@ -1162,7 +1166,7 @@ export function App() {
           <Sidebar
             step={activeStep}
             goToStep={goToStep}
-            selectedTemplateName={selectedTemplate === "car-ootd" ? "男装车内 OOTD" : "未选择模板"}
+            selectedTemplateName={formatTemplateName(activeProject?.template)}
             completionStatus={completionStatus}
             activeProject={activeProject}
             returnHome={returnHome}
@@ -1312,7 +1316,13 @@ function Sidebar({ step, goToStep, selectedTemplateName, completionStatus, activ
       <div className="project-sidebar-head">
         <span>当前项目</span>
         <strong title={activeProject?.name}>{activeProject?.name ?? "未选择项目"}</strong>
-        <small>{selectedTemplateName}</small>
+        <div className="sidebar-template-preview" aria-label={`当前模板：${selectedTemplateName}`}>
+          <video src={templateVideo} muted loop playsInline autoPlay poster={frames[3]} />
+          <div>
+            <em>当前模板</em>
+            <small>{selectedTemplateName}</small>
+          </div>
+        </div>
         {activeProject && (
           <button type="button" className="text-action" onClick={() => renameProject(activeProject)}>
             重命名
@@ -1378,6 +1388,15 @@ function ProjectHome({
 
   return (
     <section className="project-home" aria-label="项目首页">
+      <div className="home-template-panel">
+        <TemplateScreen
+          selectedTemplate={selectedTemplate}
+          selectTemplate={selectTemplate}
+          previewTemplateVideo={previewTemplateVideo}
+          homeMode
+        />
+      </div>
+
       <div className="project-home-heading">
         <div>
           <h1>项目库</h1>
@@ -1387,15 +1406,6 @@ function ProjectHome({
           <span>{projects.length} / {PROJECT_LIMIT} 个项目</span>
           <span>已用容量 {PROJECT_STORAGE_USED_GB}GB / {PROJECT_STORAGE_LIMIT_GB}GB</span>
         </div>
-      </div>
-
-      <div className="home-template-panel">
-        <TemplateScreen
-          selectedTemplate={selectedTemplate}
-          selectTemplate={selectTemplate}
-          previewTemplateVideo={previewTemplateVideo}
-          homeMode
-        />
       </div>
 
       <section className="history-projects" aria-label="项目卡片">
@@ -1642,10 +1652,10 @@ function TemplateScreen({ selectedTemplate, selectTemplate, previewTemplateVideo
       <div className="template-copy">
         <HeaderBlock
           label={homeMode ? "项目模板" : "步骤 1"}
-          title="选择爆款模板"
+          title={homeMode ? "模板库" : "选择爆款模板"}
           desc={
             homeMode
-              ? "创建项目之前先选择模板。默认选中男装车内 OOTD，项目创建后模板会锁定，进入工作台后不能再切换。"
+              ? "创建项目前先选择爆款模板。默认选中男装车内 OOTD，项目创建后模板会锁定，进入工作台后不能再切换。"
               : "默认选中男装车内 OOTD 模板。模板用竖屏视频展示，未来可继续扩展 3-5 个不同服装爆款模板。"
           }
         />
