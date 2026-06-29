@@ -1172,6 +1172,7 @@ export function App() {
             returnHome={returnHome}
             renameProject={renameProject}
             openGenerationManager={() => setGenerationManagerOpen(true)}
+            previewTemplateVideo={previewTemplateVideo}
           />
         )}
         <main className={viewMode === "home" ? "main home-page" : "main flow-page"}>
@@ -1303,7 +1304,7 @@ function CostBadge({ value, suffix = "", label = "预计消耗" }) {
   );
 }
 
-function Sidebar({ step, goToStep, selectedTemplateName, completionStatus, activeProject, returnHome, renameProject, openGenerationManager }) {
+function Sidebar({ step, goToStep, selectedTemplateName, completionStatus, activeProject, returnHome, renameProject, openGenerationManager, previewTemplateVideo }) {
   const items = [
     { id: 1, title: "上传素材", desc: "模特图 + 服装图", target: "step-upload" },
     { id: 2, title: "视频生成与配置", desc: "6 图配置与下载", target: "step-generate" },
@@ -1316,13 +1317,19 @@ function Sidebar({ step, goToStep, selectedTemplateName, completionStatus, activ
       <div className="project-sidebar-head">
         <span>当前项目</span>
         <strong title={activeProject?.name}>{activeProject?.name ?? "未选择项目"}</strong>
-        <div className="sidebar-template-preview" aria-label={`当前模板：${selectedTemplateName}`}>
+        <button
+          type="button"
+          className="sidebar-template-preview"
+          onClick={previewTemplateVideo}
+          aria-label={`放大查看当前模板：${selectedTemplateName}`}
+          title="单击放大模板视频"
+        >
           <video src={templateVideo} muted loop playsInline autoPlay poster={frames[3]} />
           <div>
             <em>当前模板</em>
             <small>{selectedTemplateName}</small>
           </div>
-        </div>
+        </button>
         {activeProject && (
           <button type="button" className="text-action" onClick={() => renameProject(activeProject)}>
             重命名
@@ -1651,7 +1658,7 @@ function TemplateScreen({ selectedTemplate, selectTemplate, previewTemplateVideo
     <section className="stage template-stage">
       <div className="template-copy">
         <HeaderBlock
-          label={homeMode ? "项目模板" : "步骤 1"}
+          label={homeMode ? "" : "步骤 1"}
           title={homeMode ? "模板库" : "选择爆款模板"}
           desc={
             homeMode
@@ -2534,7 +2541,7 @@ function TaskScreen() {
 function HeaderBlock({ label, title, desc }) {
   return (
     <div className="header-block">
-      <span>{label}</span>
+      {label ? <span>{label}</span> : null}
       <h1>{title}</h1>
       <p>{desc}</p>
     </div>
