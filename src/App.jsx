@@ -860,19 +860,6 @@ export function App() {
     );
   }
 
-  function useExample(rowId, type, suggestion) {
-    const label = typeof suggestion === "string" ? suggestion : suggestion.text;
-    const target = previewRows.find((row) => row.id === rowId);
-    if (!target) return;
-
-    updatePreviewRow(
-      rowId,
-      type === "action"
-        ? { actionText: appendGeneratedPrompt(target.actionText, label) }
-        : { sceneText: appendGeneratedPrompt(target.sceneText, label) }
-    );
-  }
-
   function polish(rowId, type) {
     const target = previewRows.find((row) => row.id === rowId);
     if (!target) return;
@@ -1214,7 +1201,6 @@ export function App() {
                   count={count}
                   setCount={setCount}
                   polish={polish}
-                  useExample={useExample}
                   rerollPreview={rerollPreview}
                   aiConfigureAll={aiConfigureAll}
                   onGenerate={startGeneration}
@@ -1872,7 +1858,6 @@ function VideoGenerationScreen({
   count,
   setCount,
   polish,
-  useExample,
   rerollPreview,
   aiConfigureAll,
   onGenerate,
@@ -1941,7 +1926,6 @@ function VideoGenerationScreen({
             index={index}
             model={model}
             updatePreviewRow={updatePreviewRow}
-            useExample={useExample}
             polish={polish}
             rerollPreview={rerollPreview}
             generateRowVideo={generateRowVideo}
@@ -1964,7 +1948,6 @@ function PreviewGenerationRow({
   index,
   model,
   updatePreviewRow,
-  useExample,
   polish,
   rerollPreview,
   generateRowVideo,
@@ -2145,20 +2128,16 @@ function PreviewGenerationRow({
         </div>
         <MiniPromptBlock
           title="动作"
-          examples={getActionSuggestions(row)}
           value={row.actionText}
           setValue={(value) => updatePreviewRow(row.id, { actionText: value })}
           onPolish={() => polish(row.id, "action")}
-          onExample={(value) => useExample(row.id, "action", value)}
           placeholder="请输入动作要求，或点击 AI生成后继续修改"
         />
         <MiniPromptBlock
           title="风景"
-          examples={getSceneSuggestions(row)}
           value={row.sceneText}
           setValue={(value) => updatePreviewRow(row.id, { sceneText: value })}
           onPolish={() => polish(row.id, "scene")}
-          onExample={(value) => useExample(row.id, "scene", value)}
           placeholder="请输入风景要求，或点击 AI生成后继续修改"
         />
       </div>
@@ -2267,7 +2246,7 @@ function PreviewGenerationRow({
   );
 }
 
-function MiniPromptBlock({ title, examples, value, setValue, onPolish, onExample, placeholder }) {
+function MiniPromptBlock({ title, value, setValue, onPolish, placeholder }) {
   return (
     <div className="mini-prompt-card">
       <div className="mini-prompt-head">
@@ -2276,13 +2255,6 @@ function MiniPromptBlock({ title, examples, value, setValue, onPolish, onExample
           <span>AI生成</span>
           <CostBadge value={AI_POLISH_PRICE} />
         </button>
-      </div>
-      <div className="mini-chips">
-        {examples.map((example) => (
-          <button key={typeof example === "string" ? example : example.label} onClick={() => onExample(example)}>
-            {typeof example === "string" ? example : example.label}
-          </button>
-        ))}
       </div>
       <textarea className="mini-input-textarea" value={value} onChange={(event) => setValue(event.target.value)} maxLength={520} placeholder={placeholder} />
     </div>

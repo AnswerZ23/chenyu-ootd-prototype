@@ -1995,23 +1995,6 @@ textarea:focus {
   font-weight: 800;
 }
 
-.mini-chips {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-  margin-bottom: 8px;
-}
-
-.mini-chips button {
-  height: 30px;
-  border: 1px solid var(--line);
-  border-radius: 7px;
-  background: white;
-  color: #343a37;
-  padding: 0 10px;
-  font-size: 12px;
-}
-
 .mini-prompt-card textarea {
   min-height: 86px;
   font-size: 13px;
