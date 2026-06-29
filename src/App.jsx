@@ -789,11 +789,10 @@ export function App() {
   const activeProjectVideoCount = (activeProject?.outputs?.length ?? 0) + (activeProject?.generatingOutputs?.length ?? 0);
 
   const completionStatus = {
-    1: Boolean(selectedTemplate),
-    2:
+    1:
       !deletedMaterials[materialKey("model", "正脸照")] &&
       !deletedMaterials[materialKey("garment", "正面平铺图")],
-    3: activeProjectVideoCount > 0 || previewRows.some((row) => row.videoStatus === "生成中" || row.videoStatus === "可下载"),
+    2: activeProjectVideoCount > 0 || previewRows.some((row) => row.videoStatus === "生成中" || row.videoStatus === "可下载"),
   };
 
   useEffect(() => {
@@ -1043,14 +1042,19 @@ export function App() {
       setLimitDialogOpen(true);
       return;
     }
+    if (selectedTemplate !== "car-ootd") {
+      setToast("请选择可用模板后再新建项目");
+      return;
+    }
     const number = getNextProjectNumber(projects);
     const id = `${formatProjectTime()}-${String(number).padStart(3, "0")}`;
+    const templateName = selectedTemplate === "car-ootd" ? "男装车内OOTD" : "未选择模板";
     const project = {
       id,
-      name: buildProjectName(id),
-      template: "男装车内OOTD",
+      name: buildProjectName(id, templateName),
+      template: templateName,
       cover: frames[0],
-      selectedTemplate: "car-ootd",
+      selectedTemplate,
       previewRows: createEmptyPreviewRows(),
       model: "open",
       count: 1,
@@ -1115,7 +1119,7 @@ export function App() {
       rows.map((row) => ({ ...row, videoStatus: "生成中" }))
     );
     setBatchGenerationRequest((request) => ({ id: request.id + 1, quantity: count }));
-    goToStep("step-generate", 3);
+    goToStep("step-generate", 2);
   }
 
   function startRowGeneration(rowId, quantity = 1) {
@@ -1170,6 +1174,9 @@ export function App() {
           {viewMode === "home" ? (
             <ProjectHome
               projects={projects}
+              selectedTemplate={selectedTemplate}
+              selectTemplate={selectTemplate}
+              previewTemplateVideo={previewTemplateVideo}
               createProject={createProject}
               openProject={loadProject}
               renameProject={renameProject}
@@ -1177,13 +1184,6 @@ export function App() {
             />
           ) : (
             <>
-              <div id="step-template" className="flow-section template-flow-section">
-                <TemplateScreen
-                  selectedTemplate={selectedTemplate}
-                  selectTemplate={selectTemplate}
-                  previewTemplateVideo={previewTemplateVideo}
-                />
-              </div>
               <div id="step-upload" className="flow-section">
                 <UploadScreen
                   goToStep={goToStep}
@@ -1301,9 +1301,8 @@ function CostBadge({ value, suffix = "", label = "预计消耗" }) {
 
 function Sidebar({ step, goToStep, selectedTemplateName, completionStatus, activeProject, returnHome, renameProject, openGenerationManager }) {
   const items = [
-    { id: 1, title: "选择模板", desc: selectedTemplateName, target: "step-template" },
-    { id: 2, title: "上传素材", desc: "模特图 + 服装图", target: "step-upload" },
-    { id: 3, title: "视频生成与配置", desc: "6 图配置与下载", target: "step-generate" },
+    { id: 1, title: "上传素材", desc: "模特图 + 服装图", target: "step-upload" },
+    { id: 2, title: "视频生成与配置", desc: "6 图配置与下载", target: "step-generate" },
   ];
   const readyOutputCount = activeProject?.outputs?.length ?? 0;
   const generatingOutputCount = activeProject?.generatingOutputs?.length ?? 0;
@@ -1313,6 +1312,7 @@ function Sidebar({ step, goToStep, selectedTemplateName, completionStatus, activ
       <div className="project-sidebar-head">
         <span>当前项目</span>
         <strong title={activeProject?.name}>{activeProject?.name ?? "未选择项目"}</strong>
+        <small>{selectedTemplateName}</small>
         {activeProject && (
           <button type="button" className="text-action" onClick={() => renameProject(activeProject)}>
             重命名
@@ -1359,7 +1359,16 @@ function Sidebar({ step, goToStep, selectedTemplateName, completionStatus, activ
   );
 }
 
-function ProjectHome({ projects, createProject, openProject, renameProject, askDeleteProject }) {
+function ProjectHome({
+  projects,
+  selectedTemplate,
+  selectTemplate,
+  previewTemplateVideo,
+  createProject,
+  openProject,
+  renameProject,
+  askDeleteProject,
+}) {
   function handleCardKeyDown(event, project) {
     if (event.key === "Enter" || event.key === " ") {
       event.preventDefault();
@@ -1380,6 +1389,15 @@ function ProjectHome({ projects, createProject, openProject, renameProject, askD
         </div>
       </div>
 
+      <div className="home-template-panel">
+        <TemplateScreen
+          selectedTemplate={selectedTemplate}
+          selectTemplate={selectTemplate}
+          previewTemplateVideo={previewTemplateVideo}
+          homeMode
+        />
+      </div>
+
       <section className="history-projects" aria-label="项目卡片">
         <div className="project-card-grid">
           <article className="new-project-card" onClick={createProject}>
@@ -1389,8 +1407,8 @@ function ProjectHome({ projects, createProject, openProject, renameProject, askD
             </div>
             <div className="new-project-body">
               <strong>新建项目</strong>
-              <small>自动命名并进入工作台</small>
-              <em>素材、配置、视频会实时保存</em>
+              <small>使用当前选中模板创建</small>
+              <em>{selectedTemplate === "car-ootd" ? "男装车内 OOTD" : "请先选择可用模板"}</em>
             </div>
           </article>
           {projects.map((project, index) => {
@@ -1604,7 +1622,7 @@ function ConfirmModal({ title, desc, confirmText, close, confirm, danger = false
   );
 }
 
-function TemplateScreen({ selectedTemplate, selectTemplate, previewTemplateVideo }) {
+function TemplateScreen({ selectedTemplate, selectTemplate, previewTemplateVideo, homeMode = false }) {
   const selectedVideoRef = useRef(null);
 
   useEffect(() => {
@@ -1623,9 +1641,13 @@ function TemplateScreen({ selectedTemplate, selectTemplate, previewTemplateVideo
     <section className="stage template-stage">
       <div className="template-copy">
         <HeaderBlock
-          label="步骤 1"
+          label={homeMode ? "项目模板" : "步骤 1"}
           title="选择爆款模板"
-          desc="默认选中男装车内 OOTD 模板。模板用竖屏视频展示，未来可继续扩展 3-5 个不同服装爆款模板。"
+          desc={
+            homeMode
+              ? "创建项目之前先选择模板。默认选中男装车内 OOTD，项目创建后模板会锁定，进入工作台后不能再切换。"
+              : "默认选中男装车内 OOTD 模板。模板用竖屏视频展示，未来可继续扩展 3-5 个不同服装爆款模板。"
+          }
         />
         <div className="template-library">
           <div
@@ -1649,7 +1671,7 @@ function TemplateScreen({ selectedTemplate, selectTemplate, previewTemplateVideo
             <div className="tile-copy">
               <strong>男装车内 OOTD</strong>
               <span>车内驾驶场景种草视频</span>
-              <em>{selectedTemplate === "car-ootd" ? "默认选中" : "点击框体选中"}</em>
+              <em>{selectedTemplate === "car-ootd" ? (homeMode ? "当前模板" : "默认选中") : "点击框体选中"}</em>
             </div>
           </div>
           {["通勤外套街拍", "秋冬叠穿试衣间", "运动套装出街", "更多模板"].map((name, index) => (
@@ -1696,7 +1718,7 @@ function UploadScreen({ goToStep, generatePreviewRows, deletedMaterials, setDele
         <div>
           <div className="upload-headline">
             <div className="header-block">
-              <span>步骤 2</span>
+              <span>步骤 1</span>
               <div className="upload-title-line">
                 <h1>上传素材</h1>
                 <label className="auto-import-toggle">
@@ -1761,7 +1783,7 @@ function UploadScreen({ goToStep, generatePreviewRows, deletedMaterials, setDele
             className="primary cost-button"
             onClick={() => {
               generatePreviewRows();
-              goToStep("step-generate", 3);
+              goToStep("step-generate", 2);
             }}
           >
             <span>生成预览图</span>
@@ -1875,7 +1897,7 @@ function VideoGenerationScreen({
     <section className="stage video-config-stage">
       <div className="video-config-top">
         <HeaderBlock
-          label="步骤 3"
+          label="步骤 2"
           title="视频生成与配置"
           desc={`当前模板配置为 ${CURRENT_TEMPLATE_PREVIEW_COUNT} 张预览图。每张预览图都可以单独重抽，并拥有自己的动作与风景配置；提示词会保存当前编辑态，也会在每条视频生成时保存快照。`}
         />

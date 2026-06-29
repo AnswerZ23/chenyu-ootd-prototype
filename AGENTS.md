@@ -20,10 +20,12 @@ OOTD 2.0 project-mode decisions:
 - A project contains template selection, uploaded materials, preview rows, action/scene configuration, generated videos, and download actions.
 - Keep at most 10 projects. When the user tries to create the 11th project, show a blocking prompt and require manual deletion first; do not auto-delete old projects.
 - Project names are editable. Default names still follow the generated `YYMMDD-HHMM-NNN 模板名称` format, but users can rename a project from the project library or inside the workbench.
+- Template selection belongs on the project home above the new-project card. The first template is selected by default before project creation.
+- Creating a project stores the currently selected template into that project name and project data. Once inside the project workbench, the template is locked and cannot be switched.
 - Project-mode storage should support returning later to continue editing. Do not assume uploaded resources expire after 18 hours in the product experience; expose account capacity, currently 2GB, as used capacity / total capacity on the project home.
 - Historical projects support entering and deleting. Deleting a project requires confirmation and removes that project's saved materials, configuration, previews, and video records.
 - Returning home, refreshing, or exiting should preserve the current project state in the prototype's local persistence.
-- The left sidebar with the three steps is only shown inside a project workbench. It should show the current project name and a return-home action.
+- The left sidebar is only shown inside a project workbench. It should show the current project name, the locked template name, and a return-home action.
 - Download entry points stay inside the project workbench. Do not recreate a separate task-center detail page for v2 unless the product direction changes again.
 - If a project has generated or generating videos, show a "生成管理" entry directly below the "视频生成与配置" sidebar step and above "使用指引" so users can find it immediately while entering step 3.
 - The "生成管理" modal should present generated videos by generation timeline, with a title area, "全选" control under the title, a top-right "下载选中文件" action, per-video circular selection controls, single-video download actions, and visible progress cards for generating videos.
@@ -60,7 +62,7 @@ Preview and result decisions:
 - The result step only shows "重抽视频" and "下载视频" in the main action row; do not show a "返回参数" button there.
 
 Video-generation module decisions:
-- The front-stage workflow is now three steps: 选择模板, 上传素材, 视频生成与配置. Do not split preview confirmation, parameter configuration, and result download into separate workbench sections.
+- The project workbench flow now starts after template selection and contains two visible steps: 上传素材 and 视频生成与配置. Do not put template switching back inside the workbench.
 - Preview count is template configuration, not a global hard-code. The 男装车内 OOTD template currently uses 6 reference samples, while future templates may use 4, 6, or 8.
 - For the 男装车内 OOTD template, one preview generation action produces 6 preview images, displayed as 6 rows inside "视频生成与配置".
 - Each preview row owns its own action/scene configuration and video result area. Users can reroll one preview row without affecting the other five.
